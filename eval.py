@@ -51,7 +51,7 @@ def calcPL(prcHist):
         ret = 0.0
         if (totDVolume > 0):
             ret = value / totDVolume
-        print("Day %d value: %.2lf todayPL: $%.2lf $-traded: %.0lf return: %.5lf" %
+        print("Day %d value: %.2lf today PL: $%.2lf $-traded: %.0lf return: %.5lf" %
               (t, value, todayPL, totDVolume, ret))
     pll = np.array(todayPLL)
     (plmu, plstd) = (np.mean(pll), np.std(pll))
