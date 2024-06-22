@@ -53,6 +53,14 @@ def calcPL(prcHist):
             ret = value / totDVolume
         print("Day %d value: %.2lf today PL: $%.2lf $-traded: %.0lf return: %.5lf" %
               (t, value, todayPL, totDVolume, ret))
+        
+        for i in range(len(curPos)):
+            pos = curPos[i]
+            totalValue = pos*curPrices[i]
+            if pos != 0:
+                continue
+                # print(f"Stock {i}, Num of Stocks: {pos}, Curr_price: ${curPrices[i]} Position total: ${totalValue}")
+
     pll = np.array(todayPLL)
     (plmu, plstd) = (np.mean(pll), np.std(pll))
     annSharpe = 0.0

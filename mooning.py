@@ -9,33 +9,33 @@ from graphing import Stocks
 
 nInst = 50
 currentPos = np.zeros(nInst)
-entryPos = np.zeros(nInst)
+entryPrice = np.zeros(nInst)
 
 
 def getMyPosition(prcSoFar):
     global currentPos, entryPos
     df = Stocks(prcSoFar)
     bb_res = df.bbCalc()
-    price = bb_res['Price'][:,-1]
-    prev_price = bb_res['Price'][:,-2]
-    ma = bb_res['Moving Average'][:,-1]
-    ub = bb_res['Upper Band'][:,-1]
-    lb = bb_res['Lower Band'][:,-1]
     
     for i in range(len(currentPos)):
+        pos_pnl = 0
         currPos = currentPos[i]
-        entry = entryPos[i] 
-        currPrice = price[i]
-        lastPrice = prev_price[i]
-        currMA = ma[i]
-        currLB = lb[i]
-        currUB = ub[i]
-        pos_pnl = (entry-currPrice)/entry
+        entry = entryPrice[i] 
+        currPrice = bb_res[i]['Price'].iloc[-1]
+        lastPrice = bb_res[i]['Price'].iloc[-2]
+        currMA = bb_res[i]['Moving Average'].iloc[-1]
+        currLB = bb_res[i]['Lower Band'].iloc[-1]
+        currUB = bb_res[i]['Upper Band'].iloc[-1]
+        if entry != 0:
+            pos_pnl = (currPrice-entry)/entry
 
         # if we don't have a position then open a position if at lower bound
         if currPos == 0:
             if currPrice <= currLB:
                 currentPos[i] = 10000
+                entryPrice[i] = currPrice
+                numOfStock = int(10000/currPrice)
+                #print(f"Bought {numOfStock} of stock {i} @ ${currPrice}")
                 continue
 
         else:

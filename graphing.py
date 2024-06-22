@@ -6,7 +6,7 @@ from pathlib import Path
 
 class Stocks:
     def __init__(self, raw_data, ma_period=21, ema_period=9, no_sd=2):
-        self.data = raw_data
+        self.data = pd.DataFrame(raw_data.T)
         self.stocks_dict = {}
         # populate dictionary with individual stocks
         for col in self.data:
@@ -69,6 +69,9 @@ class Stocks:
             plt.plot(bollinger_bands['Lower Band'], label='Lower Band', linestyle='--')
             plt.fill_between(bollinger_bands.index, bollinger_bands['Upper Band'], bollinger_bands['Lower Band'], color='gray', alpha=0.3)
 
+            # Add a vertical line at id=250
+            plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
+
             plt.title(f'Stock {id} - {self.ma_period}MA Bollinger Bands')
             plt.xlabel('Days')
             plt.ylabel('Price')
@@ -80,16 +83,23 @@ class Stocks:
             plt.savefig(plot_path)
             plt.close()
 
+def loadPrices(fn):
+    global nt, nInst
+    df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
+    (nt, nInst) = df.shape
+    return (df.values).T
+
 if __name__ == '__main__':
     # read the data from the text file
     file_path = './prices.txt'   
-    raw_data = pd.read_csv(file_path, sep='\s+', header=None) 
+    prcAll = loadPrices(file_path)
     ma_period = 21
     ema_period = 9
     no_sd = 2
 
-    df = Stocks(raw_data, ma_period, ema_period, no_sd)
+    df = Stocks(prcAll, ma_period, ema_period, no_sd)
 
-    # df.bbCalc()
-    # df.bbGraph()
+    dict = df.bbCalc()
+    print(dict[10]['Lower Band'].iloc[0])
+    df.bbGraph()
     #df.raw()
