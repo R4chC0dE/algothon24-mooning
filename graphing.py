@@ -54,7 +54,6 @@ class Stocks:
         return dictionary
 
     def bbGraph(self):
-
         # Create directory if it doesn't exist
         output_dir = Path("Bollinger Bands")
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -186,20 +185,198 @@ class Stocks:
             plt.savefig(plot_path)
             plt.close()
 
-    def stochRsiCalc(self, rsi, window=14) -> dict:
+    def stochRSICalc(self, rsi_d, window=14) -> dict:
         dictionary = {}
-        rsi_dict = rsi
-        for id, stock_price in rsi_dict.items():
+        rsi_dict = rsi_d
+        for id, stock in rsi_dict.items():
+            rsi = stock['RSI']
             stoch_rsi = (rsi - rsi.rolling(window=window, min_periods=1).min()) / (rsi.rolling(window=window, min_periods=1).max() - rsi.rolling(window=window, min_periods=1).min())*100
             
             stoch_rsi_df = pd.DataFrame({
-            'Price': stock_price,
+            'Price': stock['Price'],
             'Stochastic RSI': stoch_rsi
             })
 
             dictionary[id] = stoch_rsi_df
         
         return dictionary
+
+    def stochRSIGraph(self):
+        # Create directory if it doesn't exist
+        output_dir = Path("Stochastic RSI")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        stoch_rsi_dict = self.stochRSICalc(self.rsiCalc())
+
+        for id, rsi in stoch_rsi_dict.items():
+            plt.figure(figsize=(12, 6))
+            
+            # Plotting the price
+            plt.subplot(2,1,1)
+            plt.plot(rsi['Price'], label='Price')
+            # Add a vertical line at id=250
+            plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
+
+            plt.title(f'Stock {id} - Stochastic RSI')
+            plt.xlabel('Days')
+            plt.ylabel('Price')
+            plt.legend()
+            plt.grid()
+
+            # plotting the rsi
+            plt.subplot(2,1,2)
+            plt.plot(rsi['Stochastic RSI'], label='Stochastic RSI', color='blue')
+            plt.axhline(y=20, color='red', linestyle='--', label='Oversold (20)')
+            plt.axhline(y=80, color='green', linestyle='--', label='Overbought (80)')
+            plt.ylabel('RSI')
+            plt.grid()
+            plt.tight_layout()
+
+            # Save the plot to the directory
+            plot_path = output_dir / f'stock{id}_Stochastic_RSI.png'
+            plt.savefig(plot_path)
+            plt.close()
+
+    def macdCalc(self) -> dict:
+        dictionary = {}
+        for id, stock_price in self.stocks_dict.items():
+            short_ema = stock_price.ewm(span=12, adjust=False).mean()
+            long_ema = stock_price.ewm(span=26, adjust=False).mean()
+            macd_line = short_ema - long_ema
+
+            # calculate signal line
+            signal_line = macd_line.ewm(span=9, adjust=False).mean()
+
+            # calculate histogram
+            macd_histogram = macd_line - signal_line
+
+            # separate positive and negative values for histogram
+            pos_hist = macd_histogram[macd_histogram >= 0]
+            neg_hist = macd_histogram[macd_histogram < 0]
+
+            macd_df = pd.DataFrame({
+                'Price': stock_price,
+                'MACD Line': macd_line,
+                'Signal Line': signal_line,
+                'Positive Histogram': pos_hist,
+                'Negative Histogram': neg_hist
+            })
+
+            dictionary[id] = macd_df
+
+        return dictionary
+
+    def macdGraph(self):
+        # Create directory if it doesn't exist
+        output_dir = Path("MACD")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        macd_dict = self.macdCalc()
+
+        for id, macd in macd_dict.items():
+            plt.figure(figsize=(12, 6))
+            
+            # Plotting the price
+            plt.subplot(2,1,1)
+            plt.plot(macd['Price'], label='Price')
+            # Add a vertical line at id=250
+            plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
+
+            plt.title(f'Stock {id} - MACD')
+            plt.xlabel('Days')
+            plt.ylabel('Price')
+            plt.legend()
+            plt.grid()
+
+            plt.subplot(2,1,2)
+            plt.plot(macd['MACD Line'], label='MACD Line', color='blue')
+            plt.plot(macd['Signal Line'], label='Signal Line', color='red')
+            plt.bar(macd['Positive Histogram'].index, macd['Positive Histogram'], label='Positive Histogram', color='green', alpha=0.5)
+            plt.bar(macd['Negative Histogram'].index, macd['Negative Histogram'], label='Negative Histogram', color='red', alpha=0.5)
+
+            plt.title('MACD Indicator')
+            plt.xlabel('Date')
+            plt.ylabel('Value')
+            plt.legend(loc='upper left')
+            plt.grid()
+            plt.tight_layout()
+            
+            # Save the plot to the directory
+            plot_path = output_dir / f'stock{id}_MACD.png'
+            plt.savefig(plot_path)
+            plt.close()
+    
+    def everythingGraph(self):
+        # Create directory if it doesn't exist
+        output_dir = Path("All Indicators")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        bollinger_bands_dict = self.bbCalc()
+        stoch_rsi_dict = self.stochRSICalc(self.rsiCalc())
+        rsi_dict = self.rsiCalc()
+        macd_dict = self.macdCalc()
+        
+        stock_ids = bollinger_bands_dict.keys()
+
+        for stock_id in stock_ids:
+            plt.figure(figsize=(14, 14))
+            # graphing BB and Price
+            if stock_id in bollinger_bands_dict:
+                bollinger_bands = bollinger_bands_dict[stock_id]
+                # Plotting the Bollinger Bands
+                plt.subplot(4,1,1)
+                plt.plot(bollinger_bands['Price'], label='Price')
+                plt.plot(bollinger_bands['Moving Average'], label='Moving Average', linestyle='--')
+                plt.plot(bollinger_bands['Upper Band'], label='Upper Band', linestyle='--')
+                plt.plot(bollinger_bands['Lower Band'], label='Lower Band', linestyle='--')
+                plt.fill_between(bollinger_bands.index, bollinger_bands['Upper Band'], bollinger_bands['Lower Band'], color='gray', alpha=0.3)
+
+                # Add a vertical line at id=250
+                plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
+
+                plt.title(f'Stock {stock_id}')
+                plt.xlabel('Days')
+                plt.ylabel('Price ($)')
+                plt.legend()
+                plt.grid()
+            
+            # graphing Stochastic Relative Strength Index
+            if stock_id in stoch_rsi_dict:
+                srsi = stoch_rsi_dict[stock_id]
+                plt.subplot(4,1,2)
+                # plotting the rsi
+                plt.plot(srsi['Stochastic RSI'], label='Stochastic RSI', color='blue')
+                plt.axhline(y=20, color='red', linestyle='--', label='Oversold (20)')
+                plt.axhline(y=80, color='green', linestyle='--', label='Overbought (80)')
+                plt.ylabel('Stoch RSI')
+                plt.grid()
+
+            # graphing Relative Strength Index
+            if stock_id in rsi_dict:
+                rsi = rsi_dict[stock_id]
+                # plotting the rsi
+                plt.subplot(4,1,3)
+                plt.plot(rsi['RSI'], label='RSI', color='blue')
+                plt.axhline(y=30, color='red', linestyle='--', label='Oversold (30)')
+                plt.axhline(y=70, color='green', linestyle='--', label='Overbought (70)')
+                plt.ylabel('RSI')
+                plt.grid()
+
+            # grpahing macd
+            if stock_id in macd_dict:
+                macd = macd_dict[stock_id]
+                plt.subplot(4,1,4)
+                plt.plot(macd['MACD Line'], label='MACD Line', color='blue')
+                plt.plot(macd['Signal Line'], label='Signal Line', color='red')
+                plt.bar(macd['Positive Histogram'].index, macd['Positive Histogram'], label='Positive Histogram', color='green', alpha=0.5)
+                plt.bar(macd['Negative Histogram'].index, macd['Negative Histogram'], label='Negative Histogram', color='red', alpha=0.5)
+
+                plt.title('MACD Indicator')
+                plt.legend(loc='upper left')
+                plt.grid()
+
+            # Save the plot to the directory
+            plt.tight_layout()
+            plot_path = output_dir / f'stock{stock_id}.png'
+            plt.savefig(plot_path)
+            plt.close()
 
 def loadPrices(fn):
     global nt, nInst
@@ -221,4 +398,7 @@ if __name__ == '__main__':
     #df.bbGraph()
     #df.raw()
     #df.goldenCrossGraph()
-    df.rsiGraph()
+    #df.rsiGraph()
+    #df.stochRSIGraph()
+    #df.macdGraph()
+    df.everythingGraph()
