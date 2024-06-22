@@ -32,9 +32,9 @@ def getMyPosition(prcSoFar):
         # if we don't have a position then open a position if at lower bound
         if currPos == 0:
             if currPrice <= currLB:
-                currentPos[i] = 10000
-                entryPrice[i] = currPrice
                 numOfStock = int(10000/currPrice)
+                currentPos[i] = numOfStock
+                entryPrice[i] = currPrice
                 #print(f"Bought {numOfStock} of stock {i} @ ${currPrice}")
                 continue
 
@@ -44,12 +44,24 @@ def getMyPosition(prcSoFar):
                 currentPos[i] = 0.0
             # if price falls below ma, close 50% of position
             elif lastPrice >= currMA and currPrice <= currMA:
-                newPos = 0.5*currPos
-                currentPos[i] = newPos
+                rPos = -0.5*currPos
+                currentPos[i] += rPos
             elif currPrice >= currUB:
-                newPos = 0.5*currPos
-                currentPos[i] = newPos
+                rPos = -0.5*currPos
+                currentPos[i] += rPos
 
+    return currentPos
+
+def _getMyPosition(prcSoFar):
+    global currentPos
+    (nins, nt) = prcSoFar.shape
+    if (nt < 2):
+        return np.zeros(nins)
+    lastRet = np.log(prcSoFar[:, -1] / prcSoFar[:, -2])
+    lNorm = np.sqrt(lastRet.dot(lastRet))
+    lastRet /= lNorm
+    rpos = np.array([int(x) for x in 5000 * lastRet / prcSoFar[:, -1]])
+    currentPos = np.array([int(x) for x in currentPos+rpos])
     return currentPos
 
 if __name__ == '__main__':

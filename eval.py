@@ -58,8 +58,9 @@ def calcPL(prcHist):
             pos = curPos[i]
             totalValue = pos*curPrices[i]
             if pos != 0:
-                continue
-                # print(f"Stock {i}, Num of Stocks: {pos}, Curr_price: ${curPrices[i]} Position total: ${totalValue}")
+                print(f"Stock {i}, Num of Stocks: {pos}, Curr_price: ${curPrices[i]} Position total: ${totalValue}")
+        
+        print("\n")
 
     pll = np.array(todayPLL)
     (plmu, plstd) = (np.mean(pll), np.std(pll))
