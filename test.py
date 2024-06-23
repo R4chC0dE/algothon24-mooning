@@ -55,8 +55,8 @@ class Stocks:
         gain = price_diff.where(price_diff > 0, 0)
         loss = -price_diff.where(price_diff < 0, 0)
 
-        avg_gain = gain.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).mean())
-        avg_loss = loss.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).mean())
+        avg_gain = gain.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window, min_periods=1).mean())
+        avg_loss = loss.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window, min_periods=1).mean())
 
         rs = avg_gain/avg_loss
 
@@ -69,8 +69,8 @@ class Stocks:
         return
 
     def stochRSICalc(self, window=14):
-        rsi_min = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).min())
-        rsi_max = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).max())
+        rsi_min = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window,min_periods=1).min())
+        rsi_max = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window, min_periods=1).max())
         stoch_rsi = (self.data[f'RSI {window}'] - rsi_min) / (rsi_max - rsi_min) * 100
 
         self.data[f'StochRSI {window}'] = stoch_rsi
@@ -87,7 +87,7 @@ class Stocks:
         # calculate macd line
         self.data[f'MACD'] = self.data[f'{fast_ema}EMA'] - self.data[f'{slow_ema}EMA']
 
-        self.data['MACD Signal Line'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
+        self.data['MACD Signal'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
 
         self.whatToGraph.append('MACD')
 
@@ -113,6 +113,8 @@ if __name__ == '__main__':
     df.rsiCalc()
     df.stochRSICalc()
     df.macdCalc()
+    output_file_path = './output.txt'
+    df.data.to_csv(output_file_path, sep='\t',index=False)
     print(df.data)
 
 
