@@ -9,7 +9,7 @@ from graphing import Stocks
 
 nInst = 50
 currentPos = np.zeros(nInst)
-entryInfo = np.empty(nInst)
+entryInfo = {}
 
 def getMyPosition(prcSoFar):
     global currentPos, entryInfo
@@ -42,13 +42,13 @@ def getMyPosition(prcSoFar):
     
     for stock_id, stock_data in today_data.groupby('Stock'):
         longOrShort_dict = {}
-        price = float(stock_data['Price'])
+        price = float(stock_data['Price'].iloc[0])
         posLimit = int(10000 / price)
         currPos = currentPos[stock_id]
 
         # Bollinger Bands
-        ub = float(stock_data['Upper Band'])
-        lb = float(stock_data['Lower Band'])
+        ub = float(stock_data['Upper Band'].iloc[0])
+        lb = float(stock_data['Lower Band'].iloc[0])
 
         if price <= lb:
             longOrShort_dict['BB'] = 'Long'
@@ -56,7 +56,7 @@ def getMyPosition(prcSoFar):
             longOrShort_dict['BB'] = 'Short'
 
         # RSI
-        rsi = float(stock_data[f'RSI {rsi_window}'])
+        rsi = float(stock_data[f'RSI {rsi_window}'].iloc[0])
 
         if rsi < oversold_rsi:
             longOrShort_dict['RSI'] = 'Long'
@@ -64,7 +64,7 @@ def getMyPosition(prcSoFar):
             longOrShort_dict['RSI'] = 'Short'
 
         # Stochastic RSI
-        s_rsi = float(stock_data[f'StochRSI {rsi_window}'])
+        s_rsi = float(stock_data[f'StochRSI {rsi_window}'].iloc[0])
 
         if s_rsi < oversold_s_rsi:
             longOrShort_dict['Stoch RSI'] = 'Long'
@@ -72,8 +72,8 @@ def getMyPosition(prcSoFar):
             longOrShort_dict['Stoch RSI'] = 'Short'
 
         # MACD
-        macd = float(stock_data['MACD'])
-        macd_signal = float(stock_data['MACD Signal'])
+        macd = float(stock_data['MACD'].iloc[0])
+        macd_signal = float(stock_data['MACD Signal'].iloc[0])
 
         macd_diff = macd - macd_signal
         if macd_diff >= 0:
@@ -105,12 +105,15 @@ def getMyPosition(prcSoFar):
                 entryInfo[stock_id] = {'Position': 'Short', 'Strategies': short_strat, 'Entry Price': price}
         else: # if in a position, check if we need to close it
             entry = entryInfo[stock_id]
-
             position = entry['Position']
             strategies = entry['Strategies']
+            entry_price = entry['Entry Price']
+            close_position = False
 
             if position == 'Long':
-                close_position = False
+                # Breakeven stop-loss: exit if current price falls below entry price
+                # if price < entry_price:
+                #    close_position = True
 
                 for strat in strategies:
                     if strat == 'BB':
@@ -127,7 +130,9 @@ def getMyPosition(prcSoFar):
                             close_position = True
 
             elif position == 'Short':
-                close_position = False
+                # Breakeven stop-loss: exit if current price rises above entry price
+                # if price > entry_price:
+                #    close_position = True
 
                 for strat in strategies:
                     if strat == 'BB':
@@ -190,7 +195,7 @@ def getMyPosition(prcSoFar):
                     currentPos[stock_id] = position_size
                     entryInfo[stock_id] = {'Position': 'Short', 'Strategies': short_strat, 'Entry Price': price}
 
-    return
+    return currentPos
 
 def bbStrat_getMyPosition(prcSoFar):
     global currentPos, entryPos
