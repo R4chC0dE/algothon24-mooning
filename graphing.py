@@ -345,6 +345,8 @@ class ineffecieintStocks:
                 plt.plot(srsi['Stochastic RSI'], label='Stochastic RSI', color='blue')
                 plt.axhline(y=20, color='red', linestyle='--', label='Oversold (20)')
                 plt.axhline(y=80, color='green', linestyle='--', label='Overbought (80)')
+                # Add a vertical line at id=250
+                plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
                 plt.ylabel('Stoch RSI')
                 plt.grid()
 
@@ -356,6 +358,8 @@ class ineffecieintStocks:
                 plt.plot(rsi['RSI'], label='RSI', color='blue')
                 plt.axhline(y=30, color='red', linestyle='--', label='Oversold (30)')
                 plt.axhline(y=70, color='green', linestyle='--', label='Overbought (70)')
+                # Add a vertical line at id=250
+                plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
                 plt.ylabel('RSI')
                 plt.grid()
 
@@ -368,6 +372,9 @@ class ineffecieintStocks:
                 plt.bar(macd['Positive Histogram'].index, macd['Positive Histogram'], label='Positive Histogram', color='green', alpha=0.5)
                 plt.bar(macd['Negative Histogram'].index, macd['Negative Histogram'], label='Negative Histogram', color='red', alpha=0.5)
 
+                # Add a vertical line at id=250
+                plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
+                
                 plt.title('MACD Indicator')
                 plt.legend(loc='upper left')
                 plt.grid()
@@ -481,14 +488,27 @@ if __name__ == '__main__':
     ema_period = 9
     no_sd = 2
 
-    df = Stocks(prcAll)
+    df = ineffecieintStocks(prcAll)
 
-    dict = df.bbCalc()
+    #res = df.stochRSICalc(df.rsiCalc())
+    #res = df.macdCalc()
     #df.bbGraph()
     #df.raw()
     #df.goldenCrossGraph()
     #df.rsiGraph()
     #df.stochRSIGraph()
     #df.macdGraph()
-    #df.everythingGraph()
-    print(df.data)
+    df.everythingGraph()
+    # last_day = df.data.groupby('Stock').tail(1).reset_index(drop=True)
+
+    
+    """
+    # Create directory if it doesn't exist
+    output_dir = Path("_testing_indicator_data")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for id, bollinger_bands in res.items():
+        output_file_path = output_dir / f'stock{id}.txt'
+        bollinger_bands.to_csv(output_file_path, sep='\t',index=False)
+    """
+    
