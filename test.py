@@ -5,14 +5,10 @@ import torch as pt
 from pathlib import Path
 
 class Stocks:
-    def __init__(self, raw_data, ma_period=21, ema_period=9, no_sd=2):
-        self.data = pd.DataFrame(raw_data.T)
-        self.stock_dict = {}
-        for col in self.data:
-            self.stock_dict[col] = self.data[col]
-        self.ma_period = ma_period
-        self.ema_period = ema_period
-        self.no_sd = no_sd
+    def __init__(self, raw_data):
+        self.data = pd.DataFrame(raw_data.T).stack().reset_index()
+        self.data.columns = ['Day', 'Stock', 'Price']
+        self.whatToGraph = []
 
     def raw(self):
         # Create directory if it doesn't exist
@@ -33,154 +29,69 @@ class Stocks:
             plt.savefig(plot_path)
             plt.close()
 
-    def bbCalc(self) -> dict:
-        df = self.data
-        ma = df.rolling(window=self.ma_period).mean()
-        sd = df.rolling(window=self.ma_period).mean()
-        upper_band = ma + (2*sd)
-        lower_band = ma - (2*sd)
-        
-        for i in range(len(df-1)):
-            stock_data = df[i]
-            stock_data[f'{self.ma_period}MA'] = ma[i]
-            stock_data['Upper Band'] = upper_band[i]
-            stock_data['Lower Band'] = lower_band[i]
+    def bbCalc(self, ma_period=21):
+        # Calculate the moving average, standard deviation, and Bollinger Bands
+        self.data[f'{ma_period}MA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).mean())
+        sd = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).std())
+        self.data['Upper Band'] = self.data[f'{ma_period}MA'] + (sd * 2)
+        self.data['Lower Band'] = self.data[f'{ma_period}MA'] - (sd * 2)
 
-        
-        return 
+        self.whatToGraph.append('Bollinger Bands')
 
-    def bbGraph(self):
-
-        # Create directory if it doesn't exist
-        output_dir = Path("Bollinger Bands")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        bollinger_bands_dict = self.bbCalc()
-
-        for id, bollinger_bands in bollinger_bands_dict.items():
-            # Plotting the Bollinger Bands
-            plt.figure(figsize=(12, 6))
-            plt.plot(bollinger_bands['Price'], label='Price')
-            plt.plot(bollinger_bands['Moving Average'], label='Moving Average', linestyle='--')
-            plt.plot(bollinger_bands['Upper Band'], label='Upper Band', linestyle='--')
-            plt.plot(bollinger_bands['Lower Band'], label='Lower Band', linestyle='--')
-            plt.fill_between(bollinger_bands.index, bollinger_bands['Upper Band'], bollinger_bands['Lower Band'], color='gray', alpha=0.3)
-
-            # Add a vertical line at id=250
-            plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
-
-            plt.title(f'Stock {id} - {self.ma_period}MA Bollinger Bands')
-            plt.xlabel('Days')
-            plt.ylabel('Price')
-            plt.legend()
-            plt.grid()
-
-            # Save the plot to the directory
-            plot_path = output_dir / f'stock{id}_{self.ma_period}MA_BB.png'
-            plt.savefig(plot_path)
-            plt.close()
-
-    def goldenCrossCalc(self) -> dict:
-        dictionary = {}
-        for id, stock_price in self.stocks_dict.items():
-            ma50 = stock_price.rolling(window=50).mean().dropna()
-            ma200 = stock_price.rolling(window=200).mean().dropna()
-
-            goldenCross = pd.DataFrame({
-                'Price': stock_price,
-                '50 Day MA': ma50,
-                '200 Day MA': ma200 
-            })
-
-            dictionary[id] = goldenCross
-        
-        return dictionary
+        return
     
-    def goldenCrossGraph(self):
-        # Create directory if it doesn't exist
-        output_dir = Path("Golden Cross")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        golden_cross_dict = self.goldenCrossCalc()
+    def maCalc(self, ma_period=21):
+        self.data[f'{ma_period}MA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).mean())
+        
+        self.whatToGraph.append(f'{ma_period}_MA')
 
-        for id, golden_cross in golden_cross_dict.items():
-            # Plotting the Bollinger Bands
-            plt.figure(figsize=(12, 6))
-            plt.plot(golden_cross['Price'], label='Price')
-            plt.plot(golden_cross['50 Day MA'], label='50 Day MA')
-            plt.plot(golden_cross['200 Day MA'], label='200 Day MA')
-
-            # Add a vertical line at id=250
-            plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
-
-            plt.title(f'Stock {id} - Golden Crossover')
-            plt.xlabel('Days')
-            plt.ylabel('Price')
-            plt.legend()
-            plt.grid()
-
-            # Save the plot to the directory
-            plot_path = output_dir / f'stock{id}_GC.png'
-            plt.savefig(plot_path)
-            plt.close()
+        return
 
     def rsiCalc(self, window=14):
-        dictionary = {}
-        for id, stock_price in self.stocks_dict.items():
-            delta = stock_price.diff()
+        # calculate the price differences
+        price_diff = self.data.groupby('Stock')['Price'].diff()
 
-            # seperate gains and losses
-            gain = delta.where(delta > 0, 0)
-            loss = -delta.where(delta < 0, 0)
+        # seperate gains and losses
+        gain = price_diff.where(price_diff > 0, 0)
+        loss = -price_diff.where(price_diff < 0, 0)
 
-            avg_gain = gain.rolling(window=window, min_periods=1).mean()
-            avg_loss = loss.rolling(window=window, min_periods=1).mean()
+        avg_gain = gain.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).mean())
+        avg_loss = loss.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).mean())
 
-            rs = avg_gain/avg_loss
+        rs = avg_gain/avg_loss
 
-            rsi = 100 - (100 / (1+rs))
+        rsi = 100 - (100 / (1+rs))
 
-            rsi_df = pd.DataFrame({
-            'Price': stock_price,
-            'RSI': rsi
-            })
+        self.data[f'RSI {window}'] = rsi
 
-            dictionary[id] = rsi_df
-        
-        return dictionary
+        self.whatToGraph.append('RSI')
+
+        return
+
+    def stochRSICalc(self, window=14):
+        rsi_min = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).min())
+        rsi_max = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).max())
+        stoch_rsi = (self.data[f'RSI {window}'] - rsi_min) / (rsi_max - rsi_min) * 100
+
+        self.data[f'StochRSI {window}'] = stoch_rsi
+
+        self.whatToGraph.append('StochRSI')
+        return
     
-    def rsiGraph(self):
-        # Create directory if it doesn't exist
-        output_dir = Path("Relative Strength Index")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        rsi_dict = self.rsiCalc()
+    def macdCalc(self, slow_ema=26, fast_ema=12, signal=9):
+        # long term ema
+        self.data[f'{slow_ema}EMA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=slow_ema, adjust=False).mean())
+        # short term ema
+        self.data[f'{fast_ema}EMA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=fast_ema, adjust=False).mean())
 
-        for id, rsi in rsi_dict.items():
-            plt.figure(figsize=(12, 6))
-            
-            # Plotting the price
-            plt.subplot(2,1,1)
-            plt.plot(rsi['Price'], label='Price')
-            # Add a vertical line at id=250
-            plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
+        # calculate macd line
+        self.data[f'MACD'] = self.data[f'{fast_ema}EMA'] - self.data[f'{slow_ema}EMA']
 
-            plt.title(f'Stock {id} - RSI')
-            plt.xlabel('Days')
-            plt.ylabel('Price')
-            plt.legend()
-            plt.grid()
+        self.data['MACD Signal Line'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
 
-            # plotting the rsi
-            plt.subplot(2,1,2)
-            plt.plot(rsi['RSI'], label='RSI', color='blue')
-            plt.axhline(y=30, color='red', linestyle='--', label='Oversold (30)')
-            plt.axhline(y=70, color='green', linestyle='--', label='Overbought (70)')
-            plt.ylabel('RSI')
-            plt.grid()
-            plt.tight_layout()
+        self.whatToGraph.append('MACD')
 
-            # Save the plot to the directory
-            plot_path = output_dir / f'stock{id}_RSI.png'
-            plt.savefig(plot_path)
-            plt.close()
+        return
 
 def loadPrices(fn):
     global nt, nInst
@@ -197,9 +108,15 @@ if __name__ == '__main__':
     ema_period = 9
     no_sd = 2
 
-    df = Stocks(prcAll, ma_period, ema_period, no_sd)
+    df = Stocks(prcAll)
+    df.bbCalc()
+    df.rsiCalc()
+    df.stochRSICalc()
+    df.macdCalc()
+    print(df.data)
 
-    dict = df.bbCalc()
+
+    #dict = df.bbCalc()
     #df.bbGraph()
     #df.raw()
     #df.goldenCrossGraph()
