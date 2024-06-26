@@ -109,13 +109,21 @@ if __name__ == '__main__':
     no_sd = 2
 
     df = Stocks(prcAll)
-    df.bbCalc()
-    df.rsiCalc()
-    df.stochRSICalc()
-    df.macdCalc()
-    output_file_path = './output.txt'
-    df.data.to_csv(output_file_path, sep='\t',index=False)
-    print(df.data)
+    df = df.data[df.data['Stock'] == 0]
+    # Set 'Day' as the index
+    df.set_index('Day', inplace=True)
+
+    # Extract only the 'Price' column and create a new DataFrame
+    df = df[['Price']]
+    print(df)
+
+    #df.bbCalc()
+    #df.rsiCalc()
+    #df.stochRSICalc()
+    #df.macdCalc()
+    #output_file_path = './output.txt'
+    #df.data.to_csv(output_file_path, sep='\t',index=False)
+    #print(df.data)
 
 
     #dict = df.bbCalc()
