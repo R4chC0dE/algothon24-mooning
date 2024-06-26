@@ -384,7 +384,6 @@ class ineffecieintStocks:
             plot_path = output_dir / f'stock{stock_id}.png'
             plt.savefig(plot_path)
             plt.close()
-
 class Stocks:
     def __init__(self, raw_data):
         self.data = pd.DataFrame(raw_data.T).stack().reset_index()
