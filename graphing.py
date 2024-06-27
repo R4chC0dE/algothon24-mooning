@@ -388,7 +388,7 @@ class Stocks:
     def __init__(self, raw_data):
         self.data = pd.DataFrame(raw_data.T).stack().reset_index()
         self.data.columns = ['Day', 'Stock', 'Price']
-        self.whatToGraph = []
+        self.whatToGraph = ['Price']
 
     def raw(self):
         # Create directory if it doesn't exist
@@ -423,7 +423,7 @@ class Stocks:
     def maCalc(self, ma_period=21):
         self.data[f'{ma_period}MA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).mean())
         
-        self.whatToGraph.append(f'{ma_period}_MA')
+        self.whatToGraph.append(f'{ma_period}MA')
 
         return
 
@@ -455,7 +455,7 @@ class Stocks:
 
         self.data[f'StochRSI {window}'] = stoch_rsi
 
-        self.whatToGraph.append('StochRSI')
+        self.whatToGraph.append(f'StochRSI {window}')
         return
     
     def macdCalc(self, slow_ema=26, fast_ema=12, signal=9):
@@ -467,9 +467,10 @@ class Stocks:
         # calculate macd line
         self.data[f'MACD'] = self.data[f'{fast_ema}EMA'] - self.data[f'{slow_ema}EMA']
 
-        self.data['MACD Signal'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
+        self.data['MACD Signal'] = self.data.groupby('Stock')['MACD'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
 
         self.whatToGraph.append('MACD')
+        self.whatToGraph.append('MACD Signal')
 
         return
     
@@ -487,7 +488,8 @@ if __name__ == '__main__':
     ema_period = 9
     no_sd = 2
 
-    df = ineffecieintStocks(prcAll)
+    #df = ineffecieintStocks(prcAll)
+    #print(df.macdCalc())
 
     #res = df.stochRSICalc(df.rsiCalc())
     #res = df.macdCalc()
@@ -497,9 +499,14 @@ if __name__ == '__main__':
     #df.rsiGraph()
     #df.stochRSIGraph()
     #df.macdGraph()
-    df.everythingGraph()
+    #df.everythingGraph()
     # last_day = df.data.groupby('Stock').tail(1).reset_index(drop=True)
 
+    df = Stocks(prcAll)
+    df.bbCalc()
+    df = df.data[df.data['Stock'] == 0]
+    df.set_index('Day', inplace=True)
+    print(df)
     
     """
     # Create directory if it doesn't exist
