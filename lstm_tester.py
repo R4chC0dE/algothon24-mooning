@@ -6,6 +6,41 @@ import yfinance as yf
 import copy
 from graphing import Stocks
 
+import tensorflow as tf
+import keras
+from keras import optimizers
+from kerastuner import RandomSearch
+from keras.callbacks import History
+from keras.models import Model
+from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
+from keras.optimizers import Adam
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
+import random
+
+""" Parameters """
+
+SEED = 10
+
+# all models
+BACK_CANDLES = 60 # how many candles to use as input
+SPLIT_RATIO = 0.8 # splitting between training and test
+VALIDATION_SPLIT = 0.1
+
+# Hyperparameters for multi layer model
+
+BATCH_SIZE = 16
+EPOCHS = 30
+DROPOUT_LEVEL = 0.3
+UNITS_LSTM1 = 128
+UNITS_LSTM2 = 64
+UNITS_LSTM3 = 32
+LEARNING_RATE = 0.001
+
+NUM_PREDICTIONS = 250 # future predictions
+
+STOCK_NO = 0
+
 def loadPrices(fn):
     global nt, nInst
     df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
@@ -20,7 +55,15 @@ def calculate_indicators(df):
     df.macdCalc()
     return
 
-# grab data
+# Set seeds for reproducibility
+def set_seeds(seed=SEED):
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    random.seed(seed)
+
+set_seeds()
+
+# fetch data
 file_path = "./prices.txt"
 prcAll = loadPrices(file_path)
 data = Stocks(prcAll)
@@ -28,9 +71,8 @@ data = Stocks(prcAll)
 # Adding indicators
 calculate_indicators(data)
 future_df = copy.deepcopy(data)
-stock_no = 0
-data = data.data[data.data['Stock'] == stock_no]
-future_df.data = future_df.data[future_df.data['Stock'] == stock_no]
+data = data.data[data.data['Stock'] == STOCK_NO]
+future_df.data = future_df.data[future_df.data['Stock'] == STOCK_NO]
 #print(data)
 
 data.set_index('Day', inplace=True)
@@ -40,131 +82,71 @@ future_df.data.set_index('Day', inplace=True)
 data = data.copy()
 data['TargetNextClose'] = data['Price'].shift(-1)
 future_df.data['TargetNextClose'] = future_df.data['Price'].shift(-1)
-
 # drop NaN rows
 data.dropna(inplace=True)
 future_df.data.dropna(inplace=True)
-
 # reset index starting from 0 again to assist in calculations
 data.reset_index(inplace = True)
 future_df.data.reset_index(inplace=True)
+print(future_df.whatToGraph) # TODO need to fix whatToGraph in graphing.py need to match features below
 
-print(future_df.whatToGraph) # need to fix whatToGraph in graphing.py
-
-#data_set = data.iloc[:, :]#.values
 features = ['Price','21MA', 'Upper Band', 'Lower Band', 'RSI 14','MACD','MACD Signal','TargetNextClose']
 data_set = data[features]
 future_df.data = future_df.data[features]
-#pd.set_option('display.max_columns', None)
 
-future_df.data
-#prcAll
-#data_set.head(20)
-#print(data_set.shape)
-#print(data.shape)
-#print(type(data_set))
-
-#Target column Categories
-#y =[1 if data.Open[i]>data.Close[i] else 0 for i in range(0, len(data))]
-#yi = [data.Open[i]-data.Close[i] for i in range(0, len(data))]
-#print(yi)
-#print(len(yi))
-
-from sklearn.preprocessing import MinMaxScaler
+# normalise the data
 sc = MinMaxScaler(feature_range=(0,1))
 data_set_scaled = sc.fit_transform(data_set)
-print(data_set_scaled.shape)
-print(data_set_scaled)
 
-# multiple feature from data provided to the model
+# Preparing the feature set for the model
 X = []
-#print(data_set_scaled[0].size)
-#data_set_scaled=data_set.values
-backcandles = 60
-print(data_set_scaled.shape[0])
-for j in range(len(features)-1):#data_set_scaled[0].size):#2 columns are target not X
-    X.append([])
-    for i in range(backcandles, data_set_scaled.shape[0]):#backcandles+2
-        X[j].append(data_set_scaled[i-backcandles:i, j])
 
-#move axis from 0 to position 2
-X=np.moveaxis(X, [0], [2])
+# Generate the feature set for each feature except the last one (which is the target)
+for j in range(len(features) - 1):
+    X.append([data_set_scaled[i - BACK_CANDLES:i, j] for i in range(BACK_CANDLES, data_set_scaled.shape[0])])
 
-#Erase first elements of y because of backcandles to match X length
-#del(yi[0:backcandles])
-#X, yi = np.array(X), np.array(yi)
-# Choose -1 for last column, classification else -2...
-X, yi =np.array(X), np.array(data_set_scaled[backcandles:,-1])
-y=np.reshape(yi,(len(yi),1))
-#y=sc.fit_transform(yi)
-#X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-#print(X)
-print(X.shape)
-#print(y)
-print(y.shape)
+# Convert X to a numpy array and move the axis
+X = np.moveaxis(X, [0], [2])
 
-#also comprehensions for X
-#X = np.array([data_set_scaled[i-backcandles:i,:4].copy() for i in range(backcandles,len(data_set_scaled))])
-#print(X)
-#print(X.shape)
+# Preparing the target variable
+y = data_set_scaled[BACK_CANDLES:, -1].reshape(-1, 1)
+
+X = np.array(X)
+y = np.array(y)
 
 # split data into train test sets
-splitlimit = int(len(X)*0.8)
-print(splitlimit)
+splitlimit = int(len(X) * SPLIT_RATIO)
 X_train, X_test = X[:splitlimit], X[splitlimit:]
 y_train, y_test = y[:splitlimit], y[splitlimit:]
-print(X_train.shape)
-print(X_test.shape)
-print(y_train.shape)
-print(y_test.shape)
-#print(y_train)
 
-from keras.models import Sequential
-from keras.layers import LSTM
-from keras.layers import Dropout
-from keras.layers import Dense
-from keras.layers import TimeDistributed
-from kerastuner import RandomSearch
+#original lstm model
+def og_model():
+    original_lstm_input = Input(shape=(BACK_CANDLES, len(features)-1), name='lstm_input')
+    original_inputs = LSTM(150, name='first_layer')(original_lstm_input)
+    original_inputs = Dense(1, name='dense_layer')(original_inputs)
+    original_output = Activation('linear', name='output')(original_inputs)
+    original_model = Model(inputs=original_lstm_input, outputs=original_output)
+    original_adam = optimizers.Adam()
+    original_model.compile(optimizer=original_adam, loss='mse')
+    original_model.fit(x=X_train, y=y_train, batch_size=BATCH_SIZE, epochs=EPOCHS, shuffle=True, validation_split = VALIDATION_SPLIT)
+    return original_model
 
-import tensorflow as tf
-import keras
-from keras import optimizers
-from keras.callbacks import History
-from keras.models import Model
-from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
-from keras.optimizers import Adam
-import numpy as np
-#tf.random.set_seed(20)
-np.random.seed(10)
+#original_model = og_model()
 
-"""
-original lstm model
-
-lstm_input = Input(shape=(backcandles, len(features)-1), name='lstm_input')
-inputs = LSTM(150, name='first_layer')(lstm_input)
-inputs = Dense(1, name='dense_layer')(inputs)
-output = Activation('linear', name='output')(inputs)
-model = Model(inputs=lstm_input, outputs=output)
-adam = optimizers.Adam()
-model.compile(optimizer=adam, loss='mse')
-model.fit(x=X_train, y=y_train, batch_size=15, epochs=30, shuffle=True, validation_split = 0.1)
-"""
-
-def create_model(backcandles):
-    dropout_level = 0.3
+def create_model(backcandles=BACK_CANDLES):
     lstm_input = Input(shape=(backcandles, len(features)-1), name='lstm_input')
 
     # first lstm layer with dropout
-    x = LSTM(128, return_sequences=True, name='first_layer')(lstm_input)
-    x = Dropout(dropout_level, name='first_dropout')(x)
+    x = LSTM(UNITS_LSTM1, return_sequences=True, name='first_layer')(lstm_input)
+    x = Dropout(DROPOUT_LEVEL, name='first_dropout')(x)
 
     # second lstm layer with dropout
-    x = LSTM(64, return_sequences=True, name='second_layer')(x)
-    x = Dropout(dropout_level, name='second_dropout')(x)
+    x = LSTM(UNITS_LSTM2, return_sequences=True, name='second_layer')(x)
+    x = Dropout(DROPOUT_LEVEL, name='second_dropout')(x)
 
     # third lstm layer with dropout
-    x = LSTM(32, name='third_layer')(x)
-    x = Dropout(dropout_level, name='third_dropout')(x)
+    x = LSTM(UNITS_LSTM3, name='third_layer')(x)
+    x = Dropout(DROPOUT_LEVEL, name='third_dropout')(x)
 
     # dense layer and output
     x = Dense(1, name='dense_layer')(x)
@@ -173,23 +155,16 @@ def create_model(backcandles):
     model = Model(inputs=lstm_input, outputs=output)
     return model
 
-model = create_model(backcandles)
-
+model = create_model()
 # compile the model with the Adam optimiser
-adam = Adam(learning_rate=0.001)
+adam = Adam(learning_rate=LEARNING_RATE)
 model.compile(optimizer=adam, loss='mse')
-
-model.fit(x=X_train, y=y_train, batch_size=16, epochs=30, shuffle=True, validation_split=0.1)
-
-
-"""
-lstm tuner. attempts to find the best model
+model.fit(x=X_train, y=y_train, batch_size=BATCH_SIZE, epochs=EPOCHS, shuffle=True, validation_split=VALIDATION_SPLIT)
 
 
-from kerastuner import RandomSearch
-
+""" LSTM Tuner. Attempts to find the best model """
 def build_model(hp):
-    lstm_input = Input(shape=(backcandles, 5), name='lstm_input')
+    lstm_input = Input(shape=(BACK_CANDLES, 5), name='lstm_input')
 
     x = LSTM(units=hp.Int('units1', min_value=32, max_value=256, step=32), return_sequences=True, name='first_layer')(lstm_input)
     x = Dropout(rate=hp.Float('dropout1', min_value=0.1, max_value=0.5, step=0.1))(x)
@@ -206,14 +181,18 @@ def build_model(hp):
 
     return model
 
-tuner = RandomSearch(build_model, objective='val_loss', max_trials=5, executions_per_trial=2)
-tuner.search(X_train, y_train, epochs=30, validation_split=0.1)
+def tuned_model():
+    tuner = RandomSearch(tuned_model, objective='val_loss', max_trials=5, executions_per_trial=2)
+    tuner.search(X_train, y_train, epochs=EPOCHS, validation_split=VALIDATION_SPLIT)
 
-model = tuner.get_best_models(num_models=1)[0]
-"""
+    model = tuner.get_best_models(num_models=1)[0]
+    
+    return model
 
+# model = turned_model()
+
+""" Test Data """
 y_pred = model.predict(X_test)
-#y_pred=np.where(y_pred > 0.43, 1,0)
 for i in range(10):
     print(y_pred[i], y_test[i])
 
@@ -222,16 +201,12 @@ plt.subplot(2,1,1)
 plt.plot(y_test, color = 'black', label = 'Test')
 plt.plot(y_pred, color = 'green', label = 'Pred')
 plt.legend()
-#plt.show()
 
-
-# predict future prices
-print(future_df.data)
+""" Predict Future Prices """
 future_predictions = []
-num_predictions = 250
 
-for _ in range(num_predictions):
-    latest_data = future_df.data.tail(backcandles)
+for _ in range(NUM_PREDICTIONS):
+    latest_data = future_df.data.tail(BACK_CANDLES)
     latest_data_scaled = sc.transform(latest_data)
 
     # create input sequence
@@ -265,23 +240,16 @@ for _ in range(num_predictions):
     # only keep features
     future_df.data = future_df.data[features]
 
-
-
-#print(f"Future predictions: {future_predictions}")
-
 # Combine original data and future predictions for plotting
 original_data = data_set['Price']
-prediction_index = range(len(original_data), len(original_data) + num_predictions)
+prediction_index = range(len(original_data), len(original_data) + NUM_PREDICTIONS)
 predictions_df = pd.DataFrame({'Price': future_predictions}, index=prediction_index)
 
-#y_price = sc.inverse_transform(np.concatenate([np.zeros((y_pred.shape[0], data_set.shape[1]-1)), y_pred], axis=1))
-# Plotting the data
-#plt.figure(figsize=(12, 6))
 plt.subplot(2,1,2)
 plt.plot(original_data, label='Original Data')
 plt.plot(predictions_df, label='Predictions', color='red')
 plt.xlabel('Index')
 plt.ylabel('Price')
-plt.title(f'Stock {stock_no} Price Predictions')
+plt.title(f'Stock {STOCK_NO} Price Predictions')
 plt.legend()
 plt.show()

@@ -411,12 +411,14 @@ class Stocks:
 
     def bbCalc(self, ma_period=21):
         # Calculate the moving average, standard deviation, and Bollinger Bands
-        self.data[f'{ma_period}MA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).mean())
+        self.maCalc(ma_period)
         sd = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).std())
         self.data['Upper Band'] = self.data[f'{ma_period}MA'] + (sd * 2)
         self.data['Lower Band'] = self.data[f'{ma_period}MA'] - (sd * 2)
 
-        self.whatToGraph.append('Bollinger Bands')
+        data = [f'{ma_period}MA','Upper Band','Lower Band']
+        for data in data:
+            self.whatToGraph.append(data)
 
         return
     
