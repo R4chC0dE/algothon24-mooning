@@ -87,7 +87,7 @@ class Stocks:
         # calculate macd line
         self.data[f'MACD'] = self.data[f'{fast_ema}EMA'] - self.data[f'{slow_ema}EMA']
 
-        self.data['MACD Signal'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
+        self.data['MACD Signal'] = self.data.groupby('Stock')['MACD'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
 
         self.whatToGraph.append('MACD')
 
@@ -109,18 +109,21 @@ if __name__ == '__main__':
     no_sd = 2
 
     df = Stocks(prcAll)
-    df = df.data[df.data['Stock'] == 0]
+    #df = df.data[df.data['Stock'] == 0]
     # Set 'Day' as the index
-    df.set_index('Day', inplace=True)
+    #df.set_index('Day', inplace=True)
 
     # Extract only the 'Price' column and create a new DataFrame
-    df = df[['Price']]
-    print(df)
+    #df = df[['Price']]
+   
 
-    #df.bbCalc()
-    #df.rsiCalc()
-    #df.stochRSICalc()
-    #df.macdCalc()
+    df.bbCalc()
+    df.rsiCalc()
+    df.stochRSICalc()
+    df.macdCalc()
+    df = df.data[df.data['Stock'] == 1]
+    df.set_index('Day', inplace=True)
+    print(df)
     #output_file_path = './output.txt'
     #df.data.to_csv(output_file_path, sep='\t',index=False)
     #print(df.data)
