@@ -20,6 +20,10 @@ import numpy as np
 import random
 from pathlib import Path
 
+import psutil
+import gc
+from datetime import datetime
+
 """ Parameters """
 
 SEED = 10
@@ -261,6 +265,11 @@ def lstm(prcAll, STOCK_NO):
     plt.legend()
     #plt.show()
 
+    # Clear session to free memory
+    tf.keras.backend.clear_session()
+    # Call garbage collector
+    gc.collect()
+
     return all_predicted_values, y_pred_original_scale, y_test_original_scale, original_data, predictions_df
     
 # Set seeds for reproducibility
@@ -372,11 +381,14 @@ if __name__ == "__main__":
         # Create directory if it doesn't exist
         file_name = f"{backcandle}_backcandles"
         output_file = output_dir / f"{file_name}.txt"
+        # delete file
+        # file = open(output_file, "w")
         file = open(output_file, "a")
         r2_list = []
         rmse_list = []
         counter = 0
         file.write("\n")
+        file.write(f"{datetime.now()}")
         file.write(f"--- Independent Variable---\nBack Candle : {BACK_CANDLES}\n\n")
         file.write(f"--- Control Variables ---\nBatch Size: {BATCH_SIZE}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
             
@@ -399,6 +411,11 @@ if __name__ == "__main__":
                 file.write("\n")
             file.write(f"Stock {i} Normalised RMSE score: {rmse}\t")
             counter += 1
+
+            # Memory usage diagnostics
+            process = psutil.Process()
+            print(f"Memory usage: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
             #print(f'Stock {i} r2 score: {r2_res}')
             #print(f'Stock {i} Normalised rmse score: {rmse}')
         file.write("\n\n")
