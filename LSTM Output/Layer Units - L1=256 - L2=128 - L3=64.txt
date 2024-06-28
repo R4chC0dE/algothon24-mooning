@@ -1,0 +1,13 @@
+
+--- Independent Variable---
+LSTM Layer 1: 256
+LSTM Layer 2: 128
+LSTM Layer 3: 64
+
+--- Control Variables ---
+Back Candle : 60
+Batch Size: 16
+Epochs: 30
+Dropout Level: 0.3
+Learning Rate: 0.001
+

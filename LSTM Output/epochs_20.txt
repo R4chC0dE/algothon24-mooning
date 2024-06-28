@@ -1,0 +1,63 @@
+
+--- Independent Variable---
+Epochs: 20
+
+--- Control Variables ---
+Back Candle : 60
+Batch Size: 16
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+Stock 0 Normalised RMSE score: 0.33595411751466175	Stock 1 Normalised RMSE score: 0.4230659527121409	Stock 2 Normalised RMSE score: 0.17602923673101506	
+Stock 3 Normalised RMSE score: 0.48527784590909745	Stock 4 Normalised RMSE score: 0.2702303636563187	Stock 5 Normalised RMSE score: 0.3772578801746458	
+Stock 6 Normalised RMSE score: 0.30594128441590623	Stock 7 Normalised RMSE score: 0.27455066759244745	Stock 8 Normalised RMSE score: 0.31860335092531383	
+Stock 9 Normalised RMSE score: 0.3862816677575279	Stock 10 Normalised RMSE score: 0.8172969607530098	Stock 11 Normalised RMSE score: 0.18989221331311243	
+Stock 12 Normalised RMSE score: 0.29998545240745045	Stock 13 Normalised RMSE score: 0.4323551087237942	Stock 14 Normalised RMSE score: 0.4318477720421387	
+Stock 15 Normalised RMSE score: 0.2825097260815503	Stock 16 Normalised RMSE score: 0.1076541726001293	Stock 17 Normalised RMSE score: 0.1569104690896377	
+Stock 18 Normalised RMSE score: 0.16217748716501104	Stock 19 Normalised RMSE score: 0.3170471600924336	Stock 20 Normalised RMSE score: 0.36299506844782314	
+Stock 21 Normalised RMSE score: 0.36595864389224214	Stock 22 Normalised RMSE score: 0.21505009834300692	Stock 23 Normalised RMSE score: 0.2422348687086164	
+Stock 24 Normalised RMSE score: 0.10230953794486367	Stock 25 Normalised RMSE score: 0.28677046370056675	Stock 26 Normalised RMSE score: 0.1458877612828755	
+Stock 27 Normalised RMSE score: 0.33631860972391275	Stock 28 Normalised RMSE score: 0.16969631326113593	Stock 29 Normalised RMSE score: 0.13741937305131538	
+Stock 30 Normalised RMSE score: 0.4053647691522545	Stock 31 Normalised RMSE score: 0.4046530369441594	Stock 32 Normalised RMSE score: 0.23296681025226718	
+Stock 33 Normalised RMSE score: 0.22081125215309422	Stock 34 Normalised RMSE score: 0.10907131591121358	Stock 35 Normalised RMSE score: 0.3564465173454657	
+Stock 36 Normalised RMSE score: 0.4968903482276301	Stock 37 Normalised RMSE score: 0.30192355857944375	Stock 38 Normalised RMSE score: 0.3950865415584297	
+Stock 39 Normalised RMSE score: 0.12507793251098204	Stock 40 Normalised RMSE score: 0.1859754871728523	Stock 41 Normalised RMSE score: 0.37610055538755627	
+Stock 42 Normalised RMSE score: 0.19189241148194228	Stock 43 Normalised RMSE score: 0.19645771556886554	Stock 44 Normalised RMSE score: 0.2557991127528921	
+Stock 45 Normalised RMSE score: 0.17382341873836224	Stock 46 Normalised RMSE score: 0.2658073190486675	Stock 47 Normalised RMSE score: 0.11021453196622541	
+Stock 48 Normalised RMSE score: 0.34434771097986405	Stock 49 Normalised RMSE score: 0.09969208966842866	
+
+Average RMSE: 0.28327824126828594
+--- Independent Variable---
+Epochs: 20
+
+--- Control Variables ---
+Back Candle : 60
+Batch Size: 16
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+Stock 0 Normalised RMSE score: 0.33595411751466175	Stock 1 Normalised RMSE score: 0.4230659527121409	Stock 2 Normalised RMSE score: 0.17602923673101506	
+Stock 3 Normalised RMSE score: 0.48527784590909745	Stock 4 Normalised RMSE score: 0.2702303636563187	Stock 5 Normalised RMSE score: 0.3772578801746458	
+Stock 6 Normalised RMSE score: 0.30594128441590623	Stock 7 Normalised RMSE score: 0.27455066759244745	Stock 8 Normalised RMSE score: 0.31860335092531383	
+Stock 9 Normalised RMSE score: 0.3862816677575279	Stock 10 Normalised RMSE score: 0.8172969607530098	Stock 11 Normalised RMSE score: 0.18989221331311243	
+Stock 12 Normalised RMSE score: 0.29998545240745045	Stock 13 Normalised RMSE score: 0.4323551087237942	Stock 14 Normalised RMSE score: 0.4318477720421387	
+Stock 15 Normalised RMSE score: 0.2825097260815503	Stock 16 Normalised RMSE score: 0.1076541726001293	Stock 17 Normalised RMSE score: 0.1569104690896377	
+Stock 18 Normalised RMSE score: 0.16217748716501104	Stock 19 Normalised RMSE score: 0.3170471600924336	Stock 20 Normalised RMSE score: 0.36299506844782314	
+Stock 21 Normalised RMSE score: 0.36595864389224214	Stock 22 Normalised RMSE score: 0.21505009834300692	Stock 23 Normalised RMSE score: 0.2422348687086164	
+Stock 24 Normalised RMSE score: 0.10230953794486367	Stock 25 Normalised RMSE score: 0.28677046370056675	Stock 26 Normalised RMSE score: 0.1458877612828755	
+Stock 27 Normalised RMSE score: 0.33631860972391275	Stock 28 Normalised RMSE score: 0.16969631326113593	Stock 29 Normalised RMSE score: 0.13741937305131538	
+Stock 30 Normalised RMSE score: 0.4053647691522545	Stock 31 Normalised RMSE score: 0.4046530369441594	Stock 32 Normalised RMSE score: 0.23296681025226718	
+Stock 33 Normalised RMSE score: 0.22081125215309422	Stock 34 Normalised RMSE score: 0.10907131591121358	Stock 35 Normalised RMSE score: 0.3564465173454657	
+Stock 36 Normalised RMSE score: 0.4968903482276301	Stock 37 Normalised RMSE score: 0.30192355857944375	Stock 38 Normalised RMSE score: 0.3950865415584297	
+Stock 39 Normalised RMSE score: 0.12507793251098204	Stock 40 Normalised RMSE score: 0.1859754871728523	Stock 41 Normalised RMSE score: 0.37610055538755627	
+Stock 42 Normalised RMSE score: 0.19189241148194228	Stock 43 Normalised RMSE score: 0.19645771556886554	Stock 44 Normalised RMSE score: 0.2557991127528921	
+Stock 45 Normalised RMSE score: 0.17382341873836224	Stock 46 Normalised RMSE score: 0.2658073190486675	Stock 47 Normalised RMSE score: 0.11021453196622541	
+Stock 48 Normalised RMSE score: 0.34434771097986405	Stock 49 Normalised RMSE score: 0.09969208966842866	
+
+Average RMSE: 0.28327824126828594

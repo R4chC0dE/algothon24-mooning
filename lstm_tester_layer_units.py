@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -282,7 +281,7 @@ if __name__ == "__main__":
     file_path = "./prices.txt"
     prcAll = loadPrices(file_path)
 
-    """ run one specific configuration only 
+    """ run one specific configuration only """
     BACK_CANDLES = 60 # 30, 40, 50, 60, 70, 80, 90, 100
     BATCH_SIZE = 8 # 16, 32, 64, 128
     EPOCHS = 30 # 20, 25, 30, 35, 40, 45, 50
@@ -293,25 +292,12 @@ if __name__ == "__main__":
     LEARNING_RATE = 0.001 # 1e-5, 1e-4, 1e-3, 1e-2, 1e-1
 
     r2_list = []
-    rmse_list = []
     hyperparameter_dict = {}
-    output_dir = Path("LSTM Output")
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-
-    # Create directory if it doesn't exist
-    file_name = f"{BACK_CANDLES}_backcandles"
-    output_file = output_dir / f"{file_name}.txt"
-    file = open(output_file, "a")
-    counter = 0
-    file.write("\n")
-    file.write(f"--- Independent Variable---\nBack Candle : {BACK_CANDLES}\n\n")
-    file.write(f"--- Control Variables ---\nBatch Size: {BATCH_SIZE}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
-        
     for i in range(50):
-        print(f"Stock No {i}")
-        pred_values, y_pred, y_test, og_data, pred_df = lstm(prcAll, i)
-        
+        continue
+        # continue # not running this now
+        pred_values, y_pred, y_test = lstm(prcAll, i)
+
         # use y_test and x_test to calculate r2
         r2_res = r2_score(y_test, y_pred)
         r2_list.append(r2_res)
@@ -321,12 +307,8 @@ if __name__ == "__main__":
         y_pred_normalised = scaler.transform(y_pred.reshape(-1,1))
         mse = mean_squared_error(y_test_normalised, y_pred_normalised)
         rmse = np.sqrt(mse)
-        rmse_list.append(rmse)
-
-        if counter % 3 == 0 and counter != 0:
-            file.write("\n")
-        file.write(f"Stock {i} Normalised RMSE score: {rmse}\n")
-    """
+        print(f'Stock {i} r2 score: {r2_res}')
+        print(f'Stock {i} Normalised rmse score: {rmse}')
 
     """ finding best configuration for data """
     back_candles_list = [30,40,50,60,70,80,90,100]
@@ -354,31 +336,33 @@ if __name__ == "__main__":
     
     TOO INEFFICIENT. WILL RUN FOR MORE THAN 17 DAYS
     """
+    
     output_dir = Path("LSTM Output")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     """ FINDING WHICH VALUE WORKS BEST FOR EACH HYPERPARAMETER """
     avg_rmse_list = []
-    for backcandle in back_candles_list:
+    for units_lstm in units_lstm_list:
         # continue
-        BACK_CANDLES = backcandle
+
+        BACK_CANDLES = 60
         BATCH_SIZE = 16
         EPOCHS = 30
         DROPOUT_LEVEL = 0.3
-        UNITS_LSTM1 = 128
-        UNITS_LSTM2 = 64
-        UNITS_LSTM3 = 32
+        UNITS_LSTM1 = units_lstm[0]
+        UNITS_LSTM2 = units_lstm[1]
+        UNITS_LSTM3 = units_lstm[2]
         LEARNING_RATE = 0.001
         # Create directory if it doesn't exist
-        file_name = f"{backcandle}_backcandles"
+        file_name = f"Layer Units - L1={UNITS_LSTM1} - L2={UNITS_LSTM2} - L3={UNITS_LSTM3}"
         output_file = output_dir / f"{file_name}.txt"
         file = open(output_file, "a")
         r2_list = []
         rmse_list = []
         counter = 0
         file.write("\n")
-        file.write(f"--- Independent Variable---\nBack Candle : {BACK_CANDLES}\n\n")
-        file.write(f"--- Control Variables ---\nBatch Size: {BATCH_SIZE}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
+        file.write(f"--- Independent Variable---\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
+        file.write(f"--- Control Variables ---\nBack Candle : {BACK_CANDLES}\nBatch Size: {BATCH_SIZE}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\n\n")
             
         for i in range(50):
             print(f"Stock No {i}")
@@ -406,7 +390,7 @@ if __name__ == "__main__":
         plt.plot(rmse_list, label='RMSE')
         plt.xlabel('Stock No')
         plt.ylabel('RMSE')
-        plt.title(f'Model with {backcandle} Back Candles')
+        plt.title(f'Model with Layer Units, L1={UNITS_LSTM1} - L2={UNITS_LSTM2} - L3={UNITS_LSTM3}')
         plt.legend()
         plot_path = output_dir / f'{file_name}.png'
         plt.savefig(plot_path)
@@ -417,63 +401,3 @@ if __name__ == "__main__":
     
     file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
     file.close()
-
-
-    avg_rmse_list = []
-    for batch_size in batch_size_list:
-        continue
-        BACK_CANDLES = 60
-        BATCH_SIZE = batch_size
-        EPOCHS = 30
-        DROPOUT_LEVEL = 0.3
-        UNITS_LSTM1 = 128
-        UNITS_LSTM2 = 64
-        UNITS_LSTM3 = 32
-        LEARNING_RATE = 0.001
-        # Create directory if it doesn't exist
-        file_name = f"{batch_size}_batchsize"
-        output_file = output_dir / f"{file_name}.txt"
-        file = open(output_file, "a")
-        r2_list = []
-        rmse_list = []
-        counter = 0
-        
-        file.write(f"--- Independent Variable---\nBatch Size: {batch_size}\n\n")
-        file.write(f"--- Control Variables ---\nBack Candles: {BACK_CANDLES}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
-            
-        for i in range(50):
-            print(f"Stock No {i}")
-            pred_values, y_pred, y_test, og_data, pred_df = lstm(prcAll, i)
-            
-            # use y_test and x_test to calculate r2
-            r2_res = r2_score(y_test, y_pred)
-            r2_list.append(r2_res)
-
-            scaler = MinMaxScaler()
-            y_test_normalised = scaler.fit_transform(y_test.reshape(-1,1))
-            y_pred_normalised = scaler.transform(y_pred.reshape(-1,1))
-            mse = mean_squared_error(y_test_normalised, y_pred_normalised)
-            rmse = np.sqrt(mse)
-            rmse_list.append(rmse)
-
-            if counter % 3 == 0 and counter != 0:
-                file.write("\n")
-            file.write(f"Stock {i} Normalised RMSE score: {rmse}\n")
-            #print(f'Stock {i} r2 score: {r2_res}')
-            #print(f'Stock {i} Normalised rmse score: {rmse}')
-        file.write("\n\n")
-        plt.figure(figsize=(16,8))
-        plt.plot(rmse_list, label='RMSE')
-        plt.xlabel('Stock No')
-        plt.ylabel('RMSE')
-        plt.title(f'Model with {backcandle} Back Candles')
-        plt.legend()
-        plot_path = output_dir / f'{file_name}.png'
-        plt.savefig(plot_path)
-        plt.close()
-        
-        avg_rmse = np.mean(rmse_list)
-        file.write(f"Average RMSE: {avg_rmse}")
-    
-    file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
-
