@@ -263,6 +263,7 @@ def lstm(prcAll, STOCK_NO):
     plt.ylabel('Price')
     plt.title(f'Stock {STOCK_NO} Price Predictions')
     plt.legend()
+    plt.close()
     #plt.show()
 
     # Clear session to free memory
@@ -338,7 +339,7 @@ if __name__ == "__main__":
     """
 
     """ finding best configuration for data """
-    back_candles_list = [30,40,50,60,70,80,90,100]
+    back_candles_list = [7,10,15,20,25]
     batch_size_list = [8, 16, 32, 64, 128]
     epochs_list = [20, 25, 30, 35, 40, 45, 50]
     dropout_level_list = [0.1, 0.2, 0.3, 0.4, 0.5]
@@ -388,7 +389,7 @@ if __name__ == "__main__":
         rmse_list = []
         counter = 0
         file.write("\n")
-        file.write(f"{datetime.now()}")
+        file.write(f"{datetime.now()}\n")
         file.write(f"--- Independent Variable---\nBack Candle : {BACK_CANDLES}\n\n")
         file.write(f"--- Control Variables ---\nBatch Size: {BATCH_SIZE}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
             
@@ -409,8 +410,8 @@ if __name__ == "__main__":
 
             if counter % 3 == 0 and counter != 0:
                 file.write("\n")
-            file.write(f"Stock {i} Normalised RMSE score: {rmse}\t")
-            counter += 1
+            file.write(f"Stock {i} Normalised RMSE score: {rmse}\n")
+            # counter += 1
 
             # Memory usage diagnostics
             process = psutil.Process()
