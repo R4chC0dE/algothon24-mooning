@@ -18,6 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import r2_score, mean_squared_error
 import numpy as np
 import random
+from pathlib import Path
 
 """ Parameters """
 
@@ -41,14 +42,8 @@ LEARNING_RATE = 0.001
 NUM_PREDICTIONS = 250 # future predictions
 
 STOCK_NO = 0
-
-def lstm(STOCK_NO):
-    def loadPrices(fn):
-        global nt, nInst
-        df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
-        (nt, nInst) = df.shape
-        return (df.values).T
-
+    
+def lstm(prcAll, STOCK_NO):
     def calculate_indicators(df):
         df.bbCalc()
         df.rsiCalc()
@@ -57,17 +52,6 @@ def lstm(STOCK_NO):
         df.macdCalc()
         return
 
-    # Set seeds for reproducibility
-    def set_seeds(seed=SEED):
-        np.random.seed(seed)
-        tf.random.set_seed(seed)
-        random.seed(seed)
-
-    set_seeds()
-
-    # fetch data
-    file_path = "./prices.txt"
-    prcAll = loadPrices(file_path)
     data = Stocks(prcAll)
 
     # Adding indicators
@@ -97,7 +81,7 @@ def lstm(STOCK_NO):
     
     # after we dropna, we can calculate volatility
     volatility = data['Returns'].std()
-    print(volatility)
+    #print(volatility)
 
     features = ['Price','21MA', 'Upper Band', 'Lower Band', 'RSI 14','MACD','MACD Signal','TargetNextClose']
     data_set = data[features]
@@ -206,9 +190,9 @@ def lstm(STOCK_NO):
     y_pred_original_scale = sc.inverse_transform(np.concatenate((np.zeros((len(y_pred), data_set.shape[1] - 1)), y_pred), axis=1))[:, -1]
     y_test_original_scale = sc.inverse_transform(np.concatenate((np.zeros((len(y_test), data_set.shape[1] - 1)), y_test), axis=1))[:, -1]
 
-    print(type(y_pred_original_scale))
-    for i in range(10):
-        print(y_pred[i], y_test[i])
+    #print(type(y_pred_original_scale))
+    #for i in range(10):
+    #    print(y_pred[i], y_test[i])
 
     plt.figure(figsize=(16,8))
     plt.subplot(2,1,1)
@@ -262,25 +246,42 @@ def lstm(STOCK_NO):
     # TODO return these to calculate r2 of model
     y_pred_original_scale = y_pred_original_scale.reshape(-1, 1)
     #print(y_pred_original_scale)
-    print(np.array(future_df.data.tail(250).Price).reshape(-1, 1).shape)
+    #print(np.array(future_df.data.tail(250).Price).reshape(-1, 1).shape)
     all_predicted_values = np.concatenate((y_pred_original_scale, np.array(future_df.data.tail(250).Price).reshape(-1, 1)), axis=0)
     noise = np.random.uniform(-volatility, volatility, all_predicted_values.shape)
     all_predicted_values += noise
     #print(all_predicted_values)
-
+    prediction_index = range(len(original_data)-len(y_test), len(original_data) + NUM_PREDICTIONS)
     plt.subplot(2,1,2)
     plt.plot(original_data, label='Original Data')
-    plt.plot(predictions_df, label='Predictions', color='red')
+    plt.plot(prediction_index, all_predicted_values, label='Predictions', color='red')
     plt.xlabel('Index')
     plt.ylabel('Price')
     plt.title(f'Stock {STOCK_NO} Price Predictions')
     plt.legend()
-    plt.show()
+    #plt.show()
 
-    return all_predicted_values, y_pred_original_scale, y_test_original_scale
+    return all_predicted_values, y_pred_original_scale, y_test_original_scale, original_data, predictions_df
     
+# Set seeds for reproducibility
+def set_seeds(seed=SEED):
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    random.seed(seed)
+
+def loadPrices(fn):
+    global nt, nInst
+    df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
+    (nt, nInst) = df.shape
+    return (df.values).T
 
 if __name__ == "__main__":
+    set_seeds()
+
+    # fetch data
+    file_path = "./prices.txt"
+    prcAll = loadPrices(file_path)
+
     """ run one specific configuration only """
     BACK_CANDLES = 60 # 30, 40, 50, 60, 70, 80, 90, 100
     BATCH_SIZE = 8 # 16, 32, 64, 128
@@ -291,14 +292,16 @@ if __name__ == "__main__":
     UNITS_LSTM3 = 32 # 64, 32, 16, 8, 4, 2, 1
     LEARNING_RATE = 0.001 # 1e-5, 1e-4, 1e-3, 1e-2, 1e-1
 
-    r2 = []
+    r2_list = []
     hyperparameter_dict = {}
     for i in range(50):
-        pred_values, y_pred, y_test = lstm(i)
+        continue
+        # continue # not running this now
+        pred_values, y_pred, y_test = lstm(prcAll, i)
 
         # use y_test and x_test to calculate r2
         r2_res = r2_score(y_test, y_pred)
-        r2.append(r2_res)
+        r2_list.append(r2_res)
 
         scaler = MinMaxScaler()
         y_test_normalised = scaler.fit_transform(y_test.reshape(-1,1))
@@ -315,6 +318,7 @@ if __name__ == "__main__":
     dropout_level_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     units_lstm_list = [(256,128,64),(128,64,32),(64,32,16),(32,16,8),(16,8,4),(8,4,2),(4,2,1)]
     learning_rate_list = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+    """
     for backcandle in back_candles_list:
         for batchsize in batch_size_list:
             for epochs in epochs_list:
@@ -330,4 +334,129 @@ if __name__ == "__main__":
                             UNITS_LSTM1 = 128 # 256, 128, 64, 32, 16, 8, 4
                             UNITS_LSTM2 = 64 # 128, 64, 32, 16, 8, 4, 2
                             UNITS_LSTM3 = 32 # 64, 32, 16, 8, 4, 2, 1
-                            
+    
+    TOO INEFFICIENT. WILL RUN FOR MORE THAN 17 DAYS
+    """
+    
+    output_dir = Path("LSTM Output")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    """ FINDING WHICH VALUE WORKS BEST FOR EACH HYPERPARAMETER """
+    avg_rmse_list = []
+    for backcandle in back_candles_list:
+        # continue
+        BACK_CANDLES = backcandle
+        BATCH_SIZE = 16
+        EPOCHS = 30
+        DROPOUT_LEVEL = 0.3
+        UNITS_LSTM1 = 128
+        UNITS_LSTM2 = 64
+        UNITS_LSTM3 = 32
+        LEARNING_RATE = 0.001
+        # Create directory if it doesn't exist
+        file_name = f"{backcandle}_backcandles"
+        output_file = output_dir / f"{file_name}.txt"
+        file = open(output_file, "a")
+        r2_list = []
+        rmse_list = []
+        counter = 0
+        file.write("\n")
+        file.write(f"--- Independent Variable---\nBack Candle : {BACK_CANDLES}\n\n")
+        file.write(f"--- Control Variables ---\nBatch Size: {BATCH_SIZE}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
+            
+        for i in range(50):
+            print(f"Stock No {i}")
+            pred_values, y_pred, y_test, og_data, pred_df = lstm(prcAll, i)
+            
+            # use y_test and x_test to calculate r2
+            r2_res = r2_score(y_test, y_pred)
+            r2_list.append(r2_res)
+
+            scaler = MinMaxScaler()
+            y_test_normalised = scaler.fit_transform(y_test.reshape(-1,1))
+            y_pred_normalised = scaler.transform(y_pred.reshape(-1,1))
+            mse = mean_squared_error(y_test_normalised, y_pred_normalised)
+            rmse = np.sqrt(mse)
+            rmse_list.append(rmse)
+
+            if counter % 3 == 0 and counter != 0:
+                file.write("\n")
+            file.write(f"Stock {i} Normalised RMSE score: {rmse}\n")
+            #print(f'Stock {i} r2 score: {r2_res}')
+            #print(f'Stock {i} Normalised rmse score: {rmse}')
+        file.write("\n\n")
+        plt.figure(figsize=(16,8))
+        plt.plot(rmse_list, label='RMSE')
+        plt.xlabel('Stock No')
+        plt.ylabel('RMSE')
+        plt.title(f'Model with {backcandle} Back Candles')
+        plt.legend()
+        plot_path = output_dir / f'{file_name}.png'
+        plt.savefig(plot_path)
+        plt.close()
+        
+        avg_rmse = np.mean(rmse_list)
+        file.write(f"Average RMSE: {avg_rmse}")
+    
+    file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
+    file.close()
+
+
+    avg_rmse_list = []
+    for batch_size in batch_size_list:
+        # continue
+        BACK_CANDLES = 60
+        BATCH_SIZE = batch_size
+        EPOCHS = 30
+        DROPOUT_LEVEL = 0.3
+        UNITS_LSTM1 = 128
+        UNITS_LSTM2 = 64
+        UNITS_LSTM3 = 32
+        LEARNING_RATE = 0.001
+        # Create directory if it doesn't exist
+        file_name = f"{batch_size}_batchsize"
+        output_file = output_dir / f"{file_name}.txt"
+        file = open(output_file, "a")
+        r2_list = []
+        rmse_list = []
+        counter = 0
+        
+        file.write(f"--- Independent Variable---\nBatch Size: {batch_size}\n\n")
+        file.write(f"--- Control Variables ---\nBack Candles: {BACK_CANDLES}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
+            
+        for i in range(5):
+            print(f"Stock No {i}")
+            pred_values, y_pred, y_test, og_data, pred_df = lstm(prcAll, i)
+            
+            # use y_test and x_test to calculate r2
+            r2_res = r2_score(y_test, y_pred)
+            r2_list.append(r2_res)
+
+            scaler = MinMaxScaler()
+            y_test_normalised = scaler.fit_transform(y_test.reshape(-1,1))
+            y_pred_normalised = scaler.transform(y_pred.reshape(-1,1))
+            mse = mean_squared_error(y_test_normalised, y_pred_normalised)
+            rmse = np.sqrt(mse)
+            rmse_list.append(rmse)
+
+            if counter % 3 == 0 and counter != 0:
+                file.write("\n")
+            file.write(f"Stock {i} Normalised RMSE score: {rmse}\n")
+            #print(f'Stock {i} r2 score: {r2_res}')
+            #print(f'Stock {i} Normalised rmse score: {rmse}')
+        file.write("\n\n")
+        plt.figure(figsize=(16,8))
+        plt.plot(rmse_list, label='RMSE')
+        plt.xlabel('Stock No')
+        plt.ylabel('RMSE')
+        plt.title(f'Model with {backcandle} Back Candles')
+        plt.legend()
+        plot_path = output_dir / f'{file_name}.png'
+        plt.savefig(plot_path)
+        plt.close()
+        
+        avg_rmse = np.mean(rmse_list)
+        file.write(f"Average RMSE: {avg_rmse}")
+    
+    file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
+
