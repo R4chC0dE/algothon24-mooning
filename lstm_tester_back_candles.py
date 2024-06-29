@@ -264,13 +264,16 @@ def lstm(prcAll, STOCK_NO):
     plt.ylabel('Price')
     plt.title(f'Stock {STOCK_NO} Price Predictions')
     plt.legend()
-    plt.close()
-    #plt.show()
+    #plt.close()
+    plt.show()
 
     # Clear session to free memory
     tf.keras.backend.clear_session()
     # Call garbage collector
     gc.collect()
+
+    all_predicted_values = pd.DataFrame(all_predicted_values, columns=["Price"])
+    all_predicted_values["Stock"] = STOCK_NO
 
     return all_predicted_values, y_pred_original_scale, y_test_original_scale, original_data, predictions_df, features
     
@@ -325,7 +328,7 @@ if __name__ == "__main__":
     avg_rmse_list = []
     for backcandle in back_candles_list:
         # continue
-        BACK_CANDLES = backcandle
+        BACK_CANDLES = 30
         BATCH_SIZE = 16
         EPOCHS = 30
         DROPOUT_LEVEL = 0.3
@@ -348,11 +351,13 @@ if __name__ == "__main__":
         file.write(f"{datetime.now()}\n")
         file.write(f"--- Independent Variable---\nBack Candle : {BACK_CANDLES}\n\n")
         file.write(f"--- Control Variables ---\nBatch Size: {BATCH_SIZE}\nEpochs: {EPOCHS}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
-            
+
+        forecasted_df = []
+        forecasted_df = pd.DataFrame(forecasted_df,columns=["Price","Stock"])    
         for i in range(50):
             print(f"Stock No {i}")
             pred_values, y_pred, y_test, og_data, pred_df, features = lstm(prcAll, i)
-            
+            forecasted_df = pd.concat([forecasted_df, pred_values])
             # use y_test and x_test to calculate r2
             r2_res = r2_score(y_test, y_pred)
             r2_list.append(r2_res)

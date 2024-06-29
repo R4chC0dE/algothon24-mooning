@@ -81,7 +81,7 @@ def lstm(prcAll, STOCK_NO):
     # reset index starting from 0 again to assist in calculations
     data.reset_index(inplace = True)
     future_df.data.reset_index(inplace=True)
-    print(future_df.whatToGraph) # TODO need to fix whatToGraph in graphing.py need to match features below
+    #print(future_df.whatToGraph) # TODO need to fix whatToGraph in graphing.py need to match features below
     
     # after we dropna, we can calculate volatility
     volatility = data['Returns'].std()
@@ -280,10 +280,10 @@ def lstm(prcAll, STOCK_NO):
     # Call garbage collector
     gc.collect()
 
-    all_predicted_values = pd.DataFrame(all_predicted_values, columns=["Price"])
-    all_predicted_values["Stock"] = STOCK_NO
+    future_df.data["Stock"] = STOCK_NO
+    all_prices = future_df.data[["Price","Stock"]]
 
-    return all_predicted_values, y_pred_original_scale, y_test_original_scale, original_data, predictions_df
+    return all_prices, y_pred_original_scale, y_test_original_scale, original_data, predictions_df
     
 # Set seeds for reproducibility
 def set_seeds(seed=SEED):
@@ -315,7 +315,7 @@ if __name__ == "__main__":
     LEARNING_RATE = 0.001 # 1e-5, 1e-4, 1e-3, 1e-2, 1e-1
     """
 
-    """ finding best configuration for data """
+    """ modelling best configurations """
     back_candles_list = [55,60]
     batch_size_list = [8, 16]
     epochs_list = [30, 40]
@@ -339,9 +339,10 @@ if __name__ == "__main__":
                     forecasted_df = []
                     forecasted_df = pd.DataFrame(forecasted_df,columns=["Price","Stock"]) 
                     for i in range(5):
+                        print(f"Stock {i}")
                         pred_values, y_pred, y_test, og_data, pred_df = lstm(prcAll, i)
                         forecasted_df = pd.concat([forecasted_df, pred_values])
 
-                forecasted_df.to_csv(f"BC:{BACK_CANDLES}_BS:{BATCH_SIZE}_E:{EPOCHS}_DL:{DROPOUT_LEVEL}_L1:{UNITS_LSTM1}_LR:{LEARNING_RATE}.json", orient='records', lines=True)
+                    forecasted_df.to_csv(f"BC={BACK_CANDLES}_BS={BATCH_SIZE}_E={EPOCHS}_DL={DROPOUT_LEVEL}_L1={UNITS_LSTM1}_LR={LEARNING_RATE}.csv")
 
 
