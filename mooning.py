@@ -114,10 +114,12 @@ def getMyPosition(prcSoFar):
 
             if position == 'Long':
                 # SL
+                """
                 stop_loss_price = entry_price*(1-stop_loss)
                 if price < stop_loss_price:
                     close_position = True
-
+                """
+                
                 for strat in strategies:
                     if strat == 'BB':
                         if price >= ub:
@@ -134,9 +136,11 @@ def getMyPosition(prcSoFar):
 
             elif position == 'Short':
                 # SL
+                """
                 stop_loss_price = entry_price*(1+stop_loss)
                 if price > stop_loss_price:
                     close_position = True
+                """
 
                 for strat in strategies:
                     if strat == 'BB':
