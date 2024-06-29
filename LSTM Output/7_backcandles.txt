@@ -1,0 +1,160 @@
+
+2024-06-28 23:07:15.971646
+--- Independent Variable---
+Back Candle : 7
+
+--- Control Variables ---
+Batch Size: 16
+Epochs: 30
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+Stock 0 Normalised RMSE score: 0.16967038368039658
+Stock 1 Normalised RMSE score: 0.3935976037485892
+
+2024-06-28 23:09:41.846748
+--- Independent Variable---
+Back Candle : 7
+
+--- Control Variables ---
+Batch Size: 16
+Epochs: 30
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+
+2024-06-28 22:49:25.388298
+--- Independent Variable---
+Back Candle : 7
+
+--- Control Variables ---
+Batch Size: 16
+Epochs: 30
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+Stock 0 Normalised RMSE score: 0.16967038368039658
+Stock 1 Normalised RMSE score: 0.3935976037485892
+Stock 2 Normalised RMSE score: 0.1704721484927298
+Stock 3 Normalised RMSE score: 0.3097443344579815
+Stock 4 Normalised RMSE score: 0.2010104748539777
+Stock 5 Normalised RMSE score: 0.21080648992740722
+Stock 6 Normalised RMSE score: 0.16470512391005876
+Stock 7 Normalised RMSE score: 0.22411389471852702
+Stock 8 Normalised RMSE score: 0.24313999655503224
+Stock 9 Normalised RMSE score: 0.19090240193131985
+Stock 10 Normalised RMSE score: 0.2713699461484406
+Stock 11 Normalised RMSE score: 0.13723373123492236
+Stock 12 Normalised RMSE score: 0.22482192356571115
+Stock 13 Normalised RMSE score: 0.3188665877815929
+Stock 14 Normalised RMSE score: 0.25356332232750645
+Stock 15 Normalised RMSE score: 0.2730544987036169
+Stock 16 Normalised RMSE score: 0.10820056963006941
+Stock 17 Normalised RMSE score: 0.19515770946095568
+Stock 18 Normalised RMSE score: 0.09817296945921186
+Stock 19 Normalised RMSE score: 0.23766969768642657
+Stock 20 Normalised RMSE score: 0.17942129011689847
+Stock 21 Normalised RMSE score: 0.24621061129196578
+Stock 22 Normalised RMSE score: 0.18492347014372407
+Stock 23 Normalised RMSE score: 0.13462057842495548
+Stock 24 Normalised RMSE score: 0.13759389571050185
+Stock 25 Normalised RMSE score: 0.3477601617650678
+Stock 26 Normalised RMSE score: 0.12069802990393003
+Stock 27 Normalised RMSE score: 0.2118495584656267
+Stock 28 Normalised RMSE score: 0.15791363488440197
+Stock 29 Normalised RMSE score: 0.16627130631444706
+Stock 30 Normalised RMSE score: 0.26911036397620713
+Stock 31 Normalised RMSE score: 0.250356446944327
+Stock 32 Normalised RMSE score: 0.1303006040016391
+Stock 33 Normalised RMSE score: 0.18268308160756846
+Stock 34 Normalised RMSE score: 0.14581741203303702
+Stock 35 Normalised RMSE score: 0.21951807193925582
+Stock 36 Normalised RMSE score: 0.29547425412404243
+Stock 37 Normalised RMSE score: 0.18600798378872438
+Stock 38 Normalised RMSE score: 0.24975396153262594
+Stock 39 Normalised RMSE score: 0.10073727772745429
+Stock 40 Normalised RMSE score: 0.22950329467762834
+Stock 41 Normalised RMSE score: 0.34148634440605746
+Stock 42 Normalised RMSE score: 0.1686739392865741
+Stock 43 Normalised RMSE score: 0.232163980179861
+Stock 44 Normalised RMSE score: 0.16198651286962465
+Stock 45 Normalised RMSE score: 0.18117813577151273
+Stock 46 Normalised RMSE score: 0.21312750658106017
+Stock 47 Normalised RMSE score: 0.1019810700774102
+Stock 48 Normalised RMSE score: 0.20818780476945162
+Stock 49 Normalised RMSE score: 0.11162998473266682
+
+
+Average RMSE: 0.20526428752645448
+2024-06-28 23:25:55.574457
+--- Independent Variable---
+Back Candle : 7
+
+--- Control Variables ---
+Batch Size: 16
+Epochs: 30
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+Stock 0 Normalised RMSE score: 0.16967038368039658	AIC: 9127.536987573492	BIC: 9145.414125814696
+Stock 1 Normalised RMSE score: 0.3935976037485892	AIC: 15703.666586961983	BIC: 15721.543725203186
+Stock 2 Normalised RMSE score: 0.1704721484927298	AIC: 9233.371268387735	BIC: 9251.248406628938
+Stock 3 Normalised RMSE score: 0.3097443344579815	AIC: 14070.740697523164	BIC: 14088.617835764368
+Stock 4 Normalised RMSE score: 0.2010104748539777	AIC: 11032.298277230495	BIC: 11050.175415471698
+
+
+Average RMSE: 0.24889898904673494
+2024-06-28 23:31:07.511198
+--- Independent Variable---
+Back Candle : 7
+
+--- Control Variables ---
+Batch Size: 16
+Epochs: 30
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+Stock 0 Normalised RMSE score: 0.16967038368039658	AIC: -53.25637261214568	BIC: -35.3792343709419
+Stock 1 Normalised RMSE score: 0.3935976037485892	AIC: 350.0364138017852	BIC: 367.913552042989
+Stock 2 Normalised RMSE score: 0.1704721484927298	AIC: -50.60835654148973	BIC: -32.731218300285946
+Stock 3 Normalised RMSE score: 0.3097443344579815	AIC: 119.59951556875237	BIC: 137.47665380995616
+Stock 4 Normalised RMSE score: 0.2010104748539777	AIC: 106.04847851599254	BIC: 123.92561675719632
+
+
+Average RMSE: 0.24889898904673494
+2024-06-28 23:37:03.062716
+--- Independent Variable---
+Back Candle : 7
+
+--- Control Variables ---
+Batch Size: 16
+Epochs: 30
+Dropout Level: 0.3
+Learning Rate: 0.001
+LSTM Layer 1: 128
+LSTM Layer 2: 64
+LSTM Layer 3: 32
+
+Stock 0 Normalised RMSE score: 0.16967038368039658	AIC: -37.25637261214568	BIC: 1.0517807618624317
+Stock 1 Normalised RMSE score: 0.3935976037485892	AIC: 366.0364138017852	BIC: 404.3445671757933
+Stock 2 Normalised RMSE score: 0.1704721484927298	AIC: -34.60835654148973	BIC: 3.6997968325183876
+Stock 3 Normalised RMSE score: 0.3097443344579815	AIC: 135.59951556875237	BIC: 173.9076689427605
+Stock 4 Normalised RMSE score: 0.2010104748539777	AIC: 122.04847851599254	BIC: 160.35663189000064
+
+
+Average RMSE: 0.24889898904673494
