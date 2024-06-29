@@ -45,7 +45,7 @@ LEARNING_RATE = 0.001
 
 NUM_PREDICTIONS = 250 # future predictions
 
-STOCK_NO = 0
+STOCK_NO = 10
     
 def lstm(prcAll, STOCK_NO):
     def calculate_indicators(df):
