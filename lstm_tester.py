@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
                     forecasted_df = []
                     forecasted_df = pd.DataFrame(forecasted_df,columns=["Price","Stock"]) 
-                    for i in range(5):
+                    for i in range(50):
                         print(f"Stock {i}")
                         pred_values, y_pred, y_test, og_data, pred_df = lstm(prcAll, i)
                         forecasted_df = pd.concat([forecasted_df, pred_values])
