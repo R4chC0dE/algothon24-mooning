@@ -90,7 +90,7 @@ def lstm(prcAll, STOCK_NO):
     features = ['Price','21MA', 'Upper Band', 'Lower Band', 'RSI 14','MACD','MACD Signal','TargetNextClose']
     data_set = data[features]
     future_df.data = future_df.data[features]
-
+    
     # normalise the data
     sc = MinMaxScaler(feature_range=(0,1))
     data_set_scaled = sc.fit_transform(data_set)
@@ -343,8 +343,8 @@ if __name__ == "__main__":
     batch_size_list = [8, 16, 32, 64, 128]
     epochs_list = [20, 25, 30, 35, 40, 45, 50]
     dropout_level_list = [0.1, 0.2, 0.3, 0.4, 0.5]
-    units_lstm_list = [(256,128,64),(128,64,32),(64,32,16),(32,16,8),(16,8,4),(8,4,2),(4,2,1)]
-    learning_rate_list = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+    #units_lstm_list = [(256,128,64),(128,64,32),(64,32,16),(32,16,8),(16,8,4),(8,4,2),(4,2,1)]
+    #learning_rate_list = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
     """
     for backcandle in back_candles_list:
         for batchsize in batch_size_list:
@@ -433,7 +433,7 @@ if __name__ == "__main__":
         avg_rmse = np.mean(rmse_list)
         file.write(f"Average RMSE: {avg_rmse}")
     
-    file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
+    #file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
     file.close()
 
 
@@ -493,5 +493,5 @@ if __name__ == "__main__":
         avg_rmse = np.mean(rmse_list)
         file.write(f"Average RMSE: {avg_rmse}")
     
-    file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
+    #file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
 

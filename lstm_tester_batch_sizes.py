@@ -425,5 +425,5 @@ if __name__ == "__main__":
         avg_rmse = np.mean(rmse_list)
         file.write(f"Average RMSE: {avg_rmse}")
     
-    file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
+    #file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
     file.close()

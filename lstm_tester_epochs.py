@@ -19,6 +19,10 @@ import numpy as np
 import random
 from pathlib import Path
 
+import psutil
+import gc
+from datetime import datetime
+
 """ Parameters """
 
 SEED = 10
@@ -313,7 +317,7 @@ if __name__ == "__main__":
     """ finding best configuration for data """
     back_candles_list = [30,40,50,60,70,80,90,100]
     batch_size_list = [8, 16, 32, 64, 128]
-    epochs_list = [20, 25, 30, 35, 40, 45, 50]
+    epochs_list = [50]
     dropout_level_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     units_lstm_list = [(256,128,64),(128,64,32),(64,32,16),(32,16,8),(16,8,4),(8,4,2),(4,2,1)]
     learning_rate_list = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
@@ -360,6 +364,7 @@ if __name__ == "__main__":
         rmse_list = []
         counter = 0
         file.write("\n")
+        file.write(f"{datetime.now()}\n")
         file.write(f"--- Independent Variable---\nEpochs: {EPOCHS}\n\n")
         file.write(f"--- Control Variables ---\nBack Candle : {BACK_CANDLES}\nBatch Size: {BATCH_SIZE}\nDropout Level: {DROPOUT_LEVEL}\nLearning Rate: {LEARNING_RATE}\nLSTM Layer 1: {UNITS_LSTM1}\nLSTM Layer 2: {UNITS_LSTM2}\nLSTM Layer 3: {UNITS_LSTM3}\n\n")
             
@@ -380,8 +385,8 @@ if __name__ == "__main__":
 
             if counter % 3 == 0 and counter != 0:
                 file.write("\n")
-            file.write(f"Stock {i} Normalised RMSE score: {rmse}\t")
-            counter += 1
+            file.write(f"Stock {i} Normalised RMSE score: {rmse}\n")
+            #counter += 1
             #print(f'Stock {i} r2 score: {r2_res}')
             #print(f'Stock {i} Normalised rmse score: {rmse}')
         file.write("\n\n")
@@ -398,5 +403,5 @@ if __name__ == "__main__":
         avg_rmse = np.mean(rmse_list)
         file.write(f"Average RMSE: {avg_rmse}")
     
-    file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
+    #file.write(f"Lowest RMSE: {min(avg_rmse_list)}")
     file.close()
