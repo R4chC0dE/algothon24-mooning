@@ -483,6 +483,8 @@ def loadPrices(fn):
     return (df.values).T
 
 if __name__ == '__main__':
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+    from statsmodels.tsa.stattools import acf, pacf
     # read the data from the text file
     file_path = './prices.txt'   
     prcAll = loadPrices(file_path)
@@ -504,13 +506,72 @@ if __name__ == '__main__':
     #df.everythingGraph()
     # last_day = df.data.groupby('Stock').tail(1).reset_index(drop=True)
 
-    df = Stocks(prcAll)
-    df.bbCalc()
-    df = df.data[df.data['Stock'] == 0]
-    df.set_index('Day', inplace=True)
-    print(df)
     
+    #df.bbCalc()
+    # Create directory if it doesn't exist
+    output_dir = Path("ACF and PACF")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for i in range(50):
+        df = Stocks(prcAll)
+        df = df.data[df.data['Stock'] == i]
+        df.set_index('Day', inplace=True)
+        lags = 70
+        optimal_lags_acf = []
+        optimal_lags_pacf = []
+
+        time_series = df.Price.diff().dropna()
+        acf_vals = acf(time_series, nlags=lags)
+        pacf_vals = pacf(time_series, nlags=lags)
+
+        sig_acf_lags = np.where(np.abs(acf_vals) > 1.96/np.sqrt(len(df.Price)))[0]
+        sig_pacf_lags = np.where(np.abs(pacf_vals) > 1.96/np.sqrt(len(df.Price)))[0]
+
+        print(f"\n\nstock {i}")
+        print(sig_acf_lags)
+        print(sig_pacf_lags)
+
+        # Use the maximum significant lag as the optimal lag
+        if sig_acf_lags.size > 0:
+            optimal_lags_acf.append(sig_acf_lags[-1])
+        if sig_pacf_lags.size > 0:
+            optimal_lags_pacf.append(sig_pacf_lags[-1])
+
+    # Calculate the average optimal lags
+    avg_optimal_lag_acf = np.median(optimal_lags_acf)
+    avg_optimal_lag_pacf = np.median(optimal_lags_pacf)
+
+    print(f'Average Optimal Lag (ACF): {avg_optimal_lag_acf}')
+    print(f'Average Optimal Lag (PACF): {avg_optimal_lag_pacf}')
     """
+    # Create subplots for ACF
+    fig, axes = plt.subplots(2, 1, figsize=(12, 12))
+    # ACF plot
+    plot_acf(df.Price, lags=lags, ax=axes[0])
+    axes[0].set_title('Autocorrelation Function (ACF)')
+    # Differencing ACF plot
+    plot_acf(df.Price.diff().dropna(), lags=lags, ax=axes[1])
+    axes[1].set_title('(Differencing) Autocorrelation Function (ACF)')
+    plt.tight_layout()
+    # Save the plot to the directory
+    plot_path = output_dir / f'stock{i}_ACF.png'
+    plt.savefig(plot_path)
+    plt.close()
+
+    # Create subplots for PACF
+    fig, axes = plt.subplots(2, 1, figsize=(12, 12))
+    # ACF plot
+    plot_pacf(df.Price, lags=lags, ax=axes[0])
+    axes[0].set_title('Partial Autocorrelation Function (PACF)')
+    # Differencing ACF plot
+    plot_pacf(df.Price.diff().dropna(), lags=lags, ax=axes[1])
+    axes[1].set_title('(Differencing) Partial Autocorrelation Function (PACF)')
+    plt.tight_layout()
+    # Save the plot to the directory
+    plot_path = output_dir / f'stock{i}_Partial_ACF.png'
+    plt.savefig(plot_path)
+    plt.close()
+
+
     # Create directory if it doesn't exist
     output_dir = Path("_testing_indicator_data")
     output_dir.mkdir(parents=True, exist_ok=True)
