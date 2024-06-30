@@ -27,8 +27,6 @@ def getMyPosition(prcSoFar):
     fast_ema = 12
     macd_signal_length = 9
 
-    stop_loss = 0.05
-
     df = Stocks(prcSoFar)
     df.bbCalc(ma_period)
     df.rsiCalc(rsi_window)
@@ -113,13 +111,10 @@ def getMyPosition(prcSoFar):
             close_position = False
 
             if position == 'Long':
-                # SL
-                """
-                stop_loss_price = entry_price*(1-stop_loss)
-                if price < stop_loss_price:
-                    close_position = True
-                """
-                
+                # Breakeven stop-loss: exit if current price falls below entry price
+                # if price < entry_price:
+                #    close_position = True
+
                 for strat in strategies:
                     if strat == 'BB':
                         if price >= ub:
@@ -135,12 +130,9 @@ def getMyPosition(prcSoFar):
                             close_position = True
 
             elif position == 'Short':
-                # SL
-                """
-                stop_loss_price = entry_price*(1+stop_loss)
-                if price > stop_loss_price:
-                    close_position = True
-                """
+                # Breakeven stop-loss: exit if current price rises above entry price
+                # if price > entry_price:
+                #    close_position = True
 
                 for strat in strategies:
                     if strat == 'BB':
