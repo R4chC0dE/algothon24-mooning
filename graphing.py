@@ -414,7 +414,9 @@ class Stocks:
         self.maCalc(ma_period)
         sd = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).std())
         self.data['Upper Band'] = self.data[f'{ma_period}MA'] + (sd * 2)
+        self.data['Upper Mid Band'] = self.data[f'{ma_period}MA'] + (sd * 1)
         self.data['Lower Band'] = self.data[f'{ma_period}MA'] - (sd * 2)
+        self.data['Lower Mid Band'] = self.data[f'{ma_period}MA'] - (sd * 1)
 
         data = [f'{ma_period}MA','Upper Band','Lower Band']
         for data in data:
@@ -476,6 +478,19 @@ class Stocks:
 
         return
     
+    def dailyReturnyCalc(self, window=14):
+        self.data['Daily Return'] = self.data.groupby('Stock')['Price'].pct_change()
+        self.data[f'STD {window}'] = self.data.groupby('Stock')['Daily Return'].transform(lambda x: x.rolling(window=window).std())
+
+        return
+        
+    def atrCalc(self, window=14):
+        self.data['TR'] = self.data.groupby('Stock')['Price'].diff().abs()
+        self.data[f'ATR {window}'] = self.data.groupby('Stock')['TR'].transform(lambda x: x.rolling(window=window).mean())
+
+        return
+
+    
 def loadPrices(fn):
     global nt, nInst
     df = pd.read_csv(fn, sep='\s+', header=None, index_col=None)
@@ -492,7 +507,14 @@ if __name__ == '__main__':
     ema_period = 9
     no_sd = 2
 
-    #df = ineffecieintStocks(prcAll)
+    df = Stocks(prcAll)
+    df.dailyReturnyCalc()
+    df.atrCalc()
+    stock = df.data[df.data['Stock']==1]
+    yearly_mean = stock['ATR'].rolling(window=365).mean().iloc[-1]
+    print(stock)
+    print(yearly_mean)
+    #print(vol)
     #print(df.macdCalc())
 
     #res = df.stochRSICalc(df.rsiCalc())
@@ -509,6 +531,9 @@ if __name__ == '__main__':
     
     #df.bbCalc()
     # Create directory if it doesn't exist
+    
+
+    """
     output_dir = Path("ACF and PACF")
     output_dir.mkdir(parents=True, exist_ok=True)
     for i in range(50):
@@ -542,6 +567,9 @@ if __name__ == '__main__':
 
     print(f'Average Optimal Lag (ACF): {avg_optimal_lag_acf}')
     print(f'Average Optimal Lag (PACF): {avg_optimal_lag_pacf}')
+    """
+
+
     """
     # Create subplots for ACF
     fig, axes = plt.subplots(2, 1, figsize=(12, 12))

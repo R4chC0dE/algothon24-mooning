@@ -197,45 +197,67 @@ def getMyPosition(prcSoFar):
 
     return currentPos
 
-def bbStrat_getMyPosition(prcSoFar):
-    global currentPos, entryPos
+def newStrat(prcSoFar):
+    global currentPos, entryInfo
+
+    # bollinger bands variables
+    ma_period = 21
+    # rsi variables
+    rsi_window = 14
+    atr_window = 14
+    overbought_rsi = 70
+    oversold_rsi = 30
+    overbought_s_rsi = 80
+    oversold_s_rsi = 20
+    # macd variables
+    slow_ema = 26
+    fast_ema = 12
+    macd_signal_length = 9
+
     df = Stocks(prcSoFar)
-    bb_res = df.bbCalc()
-    
-    for i in range(len(currentPos)):
-        pos_pnl = 0
-        currPos = currentPos[i]
-        entry = entryPrice[i] 
-        currPrice = bb_res[i]['Price'].iloc[-1]
-        lastPrice = bb_res[i]['Price'].iloc[-2]
-        currMA = bb_res[i]['Moving Average'].iloc[-1]
-        currLB = bb_res[i]['Lower Band'].iloc[-1]
-        currUB = bb_res[i]['Upper Band'].iloc[-1]
-        if entry != 0:
-            pos_pnl = (currPrice-entry)/entry
+    df.bbCalc(ma_period)
+    df.rsiCalc(rsi_window)
+    df.stochRSICalc(rsi_window)
+    df.macdCalc(slow_ema, fast_ema, macd_signal_length)
+    df.maCalc(200)
+    df.maCalc(50)
+    df.atrCalc()
+    df.dailyReturnyCalc()
 
-        # if we don't have a position then open a position if at lower bound
-        if currPos == 0:
-            if currPrice <= currLB:
-                numOfStock = int(10000/currPrice)
-                currentPos[i] = numOfStock
-                entryPrice[i] = currPrice
-                #print(f"Bought {numOfStock} of stock {i} @ ${currPrice}")
-                continue
+    #volatility = df.data.groupby('Stock')[f'ATR {atr_window}'].mean()
+    #volatility = df.data.groupby('Stock')['Daily Return'].std()
 
-        else:
-            # if position is at -1%, close position
-            if pos_pnl <= -0.01:
-                currentPos[i] = 0.0
-            # if price falls below ma, close 50% of position
-            elif lastPrice >= currMA and currPrice <= currMA:
-                rPos = -0.5*currPos
-                currentPos[i] += rPos
-            elif currPrice >= currUB:
-                rPos = -0.5*currPos
-                currentPos[i] += rPos
+    last_week_of_data = df.data.groupby('Stock').tail(7).reset_index(drop=True)
+    today_data = df.data.groupby('Stock').tail(1).reset_index(drop=True)
+    print(today_data)
+    today_price = today_data['Price'] # will return as dataframe rather than series
 
-    return currentPos
+    for stock_id, stock_data in today_data.groupby('Stock'):
+        price = float(stock_data['Price'].iloc[0])
+        stock_historical_volatility = volatility[stock_id]
+        #curr_vol = stock_data[f'ATR {atr_window}'].iloc[0]
+        curr_vol = stock_data[f'STD {atr_window}'].iloc[0]
+        volatile = curr_vol > stock_historical_volatility
+        posLimit = int(10000 / price)
+        currPos = currentPos[stock_id]
+
+        # Bollinger Bands
+        ub = float(stock_data['Upper Band'].iloc[0])
+        lb = float(stock_data['Lower Band'].iloc[0])
+        # Relative Strength Index
+        rsi = float(stock_data[f'RSI {rsi_window}'].iloc[0])
+        # Stochastic RSI
+        s_rsi = float(stock_data[f'StochRSI {rsi_window}'].iloc[0])
+        # MACD
+        macd = float(stock_data['MACD'].iloc[0])
+        macd_signal = float(stock_data['MACD Signal'].iloc[0])
+        macd_diff = macd - macd_signal
+
+        print(stock_id)
+        print(stock_data)
+        print(f"historical volatility: {stock_historical_volatility}")
+        print(f"today's volatility: {curr_vol}")
+        print("\n")
 
 def _getMyPosition(prcSoFar):
     global currentPos
@@ -268,4 +290,4 @@ if __name__ == '__main__':
     (_, nt) = prcAll.shape
     prcHistSoFar = prcAll[:, :250]
 
-    getMyPosition(prcHistSoFar)
+    newStrat(prcHistSoFar)
