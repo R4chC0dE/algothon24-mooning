@@ -304,6 +304,21 @@ class ineffecieintStocks:
             plt.savefig(plot_path)
             plt.close()
     
+    def atrCalc(self, window=14):
+        dictionary = {}
+        for id, stock_price in self.stocks_dict.items():
+            tr = stock_price.diff().abs()
+            atr = tr.rolling(window=window).mean()
+
+            atr_df = pd.DataFrame({
+                'Price': stock_price,
+                'ATR': atr
+            })
+
+            dictionary[id] = atr_df
+        
+        return dictionary
+
     def everythingGraph(self):
         # Create directory if it doesn't exist
         output_dir = Path("All Indicators")
@@ -312,6 +327,7 @@ class ineffecieintStocks:
         stoch_rsi_dict = self.stochRSICalc(self.rsiCalc())
         rsi_dict = self.rsiCalc()
         macd_dict = self.macdCalc()
+        atr_dict = self.atrCalc()
         
         stock_ids = bollinger_bands_dict.keys()
 
@@ -321,7 +337,7 @@ class ineffecieintStocks:
             if stock_id in bollinger_bands_dict:
                 bollinger_bands = bollinger_bands_dict[stock_id]
                 # Plotting the Bollinger Bands
-                plt.subplot(4,1,1)
+                plt.subplot(5,1,1)
                 plt.plot(bollinger_bands['Price'], label='Price')
                 plt.plot(bollinger_bands['Moving Average'], label='Moving Average', linestyle='--')
                 plt.plot(bollinger_bands['Upper Band'], label='Upper Band', linestyle='--')
@@ -340,7 +356,7 @@ class ineffecieintStocks:
             # graphing Stochastic Relative Strength Index
             if stock_id in stoch_rsi_dict:
                 srsi = stoch_rsi_dict[stock_id]
-                plt.subplot(4,1,2)
+                plt.subplot(5,1,2)
                 # plotting the rsi
                 plt.plot(srsi['Stochastic RSI'], label='Stochastic RSI', color='blue')
                 plt.axhline(y=20, color='red', linestyle='--', label='Oversold (20)')
@@ -354,7 +370,7 @@ class ineffecieintStocks:
             if stock_id in rsi_dict:
                 rsi = rsi_dict[stock_id]
                 # plotting the rsi
-                plt.subplot(4,1,3)
+                plt.subplot(5,1,3)
                 plt.plot(rsi['RSI'], label='RSI', color='blue')
                 plt.axhline(y=30, color='red', linestyle='--', label='Oversold (30)')
                 plt.axhline(y=70, color='green', linestyle='--', label='Overbought (70)')
@@ -366,7 +382,7 @@ class ineffecieintStocks:
             # grpahing macd
             if stock_id in macd_dict:
                 macd = macd_dict[stock_id]
-                plt.subplot(4,1,4)
+                plt.subplot(5,1,4)
                 plt.plot(macd['MACD Line'], label='MACD Line', color='blue')
                 plt.plot(macd['Signal Line'], label='Signal Line', color='red')
                 plt.bar(macd['Positive Histogram'].index, macd['Positive Histogram'], label='Positive Histogram', color='green', alpha=0.5)
@@ -377,6 +393,14 @@ class ineffecieintStocks:
 
                 plt.title('MACD Indicator')
                 plt.legend(loc='upper left')
+                plt.grid()
+
+            if stock_id in atr_dict:
+                atr = atr_dict[stock_id]
+                plt.subplot(5,1,5)
+                plt.plot(atr['ATR'], label='ATR')
+
+                plt.ylabel('ATR')
                 plt.grid()
 
             # Save the plot to the directory
@@ -501,14 +525,17 @@ if __name__ == '__main__':
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
     from statsmodels.tsa.stattools import acf, pacf
     # read the data from the text file
-    file_path = './prices.txt'   
+    file_path = './prices 750 days.txt'   
     prcAll = loadPrices(file_path)
     ma_period = 21
     ema_period = 9
     no_sd = 2
 
     df = ineffecieintStocks(prcAll)
-    df.raw()
+    #rsi = df.rsiCalc()
+    #dictionary = df.atrCalc()
+    #print(dictionary)
+    df.everythingGraph()
     """df = Stocks(prcAll)
     df.dailyReturnyCalc()
     df.atrCalc()
