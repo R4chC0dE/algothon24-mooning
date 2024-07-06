@@ -58,9 +58,9 @@ def getMyPosition(prcSoFar):
         # RSI
         rsi = float(stock_data[f'RSI {rsi_window}'].iloc[0])
 
-        if rsi < oversold_rsi:
+        if rsi < overbought_rsi:
             longOrShort_dict['RSI'] = 'Long'
-        elif rsi > overbought_rsi:
+        elif rsi > oversold_rsi:
             longOrShort_dict['RSI'] = 'Short'
 
         # Stochastic RSI
@@ -160,9 +160,9 @@ def getMyPosition(prcSoFar):
                 elif price >= ub:
                     longOrShort_dict['BB'] = 'Short'
 
-                if rsi <= oversold_rsi:
+                if rsi <= overbought_rsi:
                     longOrShort_dict['RSI'] = 'Long'
-                elif rsi >= overbought_rsi:
+                elif rsi >= oversold_rsi:
                     longOrShort_dict['RSI'] = 'Short'
 
                 if s_rsi <= oversold_s_rsi:
@@ -222,42 +222,71 @@ def newStrat(prcSoFar):
     df.maCalc(200)
     df.maCalc(50)
     df.atrCalc()
-    df.dailyReturnyCalc()
+    df.dailyReturnCalc()
 
-    #volatility = df.data.groupby('Stock')[f'ATR {atr_window}'].mean()
+
+    last_week_of_data = df.data.groupby('Stock').tail(7)
+    #today_price = today_data['Price'] # will return as dataframe rather than series
+
+    volatility = df.data.groupby('Stock')[f'ATR {atr_window}'].mean()
     #volatility = df.data.groupby('Stock')['Daily Return'].std()
+    print(volatility)
 
-    last_week_of_data = df.data.groupby('Stock').tail(7).reset_index(drop=True)
-    today_data = df.data.groupby('Stock').tail(1).reset_index(drop=True)
-    print(today_data)
-    today_price = today_data['Price'] # will return as dataframe rather than series
-
-    for stock_id, stock_data in today_data.groupby('Stock'):
-        price = float(stock_data['Price'].iloc[0])
+    for stock_id, last_week_stock_data in last_week_of_data.groupby('Stock'):
+        longOrShort_dict = {}
+        today_data = last_week_stock_data.tail(1)
+        price = float(today_data['Price'].iloc[0])
         stock_historical_volatility = volatility[stock_id]
         #curr_vol = stock_data[f'ATR {atr_window}'].iloc[0]
-        curr_vol = stock_data[f'STD {atr_window}'].iloc[0]
+        curr_vol = today_data[f'ATR {atr_window}'].iloc[0]
         volatile = curr_vol > stock_historical_volatility
         posLimit = int(10000 / price)
         currPos = currentPos[stock_id]
 
         # Bollinger Bands
-        ub = float(stock_data['Upper Band'].iloc[0])
-        lb = float(stock_data['Lower Band'].iloc[0])
+        ub = float(today_data['Upper Band'].iloc[0])
+        mub = float(today_data['Mid Upper Band'].iloc[0])
+        lb = float(today_data['Lower Band'].iloc[0])
+        mlb = float(today_data['Mid Lower Band'].iloc[0])
         # Relative Strength Index
-        rsi = float(stock_data[f'RSI {rsi_window}'].iloc[0])
+        rsi = float(today_data[f'RSI {rsi_window}'].iloc[0])
         # Stochastic RSI
-        s_rsi = float(stock_data[f'StochRSI {rsi_window}'].iloc[0])
+        s_rsi = float(today_data[f'StochRSI {rsi_window}'].iloc[0])
         # MACD
-        macd = float(stock_data['MACD'].iloc[0])
-        macd_signal = float(stock_data['MACD Signal'].iloc[0])
+        macd = float(today_data['MACD'].iloc[0])
+        macd_signal = float(today_data['MACD Signal'].iloc[0])
         macd_diff = macd - macd_signal
 
+        if price <= lb:
+            longOrShort_dict['BB'] = 'Long'
+        elif price >= ub:
+            longOrShort_dict['BB'] = 'Short'
+
+        if rsi < overbought_rsi:
+            longOrShort_dict['RSI'] = 'Long'
+        elif rsi > oversold_rsi:
+            longOrShort_dict['RSI'] = 'Short'
+
+        if s_rsi < oversold_s_rsi:
+            longOrShort_dict['Stoch RSI'] = 'Long'
+        elif s_rsi > overbought_s_rsi:
+            longOrShort_dict['Stoch RSI'] = 'Short'
+
+        if macd_diff >= 0:
+            longOrShort_dict['MACD'] = 'Long'
+        else:
+            longOrShort_dict['MACD'] = 'Short'
+
+        
         print(stock_id)
-        print(stock_data)
-        print(f"historical volatility: {stock_historical_volatility}")
-        print(f"today's volatility: {curr_vol}")
+        print(today_data)
+        #print(f"historical volatility: {stock_historical_volatility}")
+        #print(f"today's volatility: {curr_vol}")
         print("\n")
+
+        if longOrShort_dict['RSI'] == 'Long':
+            return
+            
 
 def _getMyPosition(prcSoFar):
     global currentPos

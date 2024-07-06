@@ -17,7 +17,7 @@ class ineffecieintStocks:
 
     def raw(self):
         # Create directory if it doesn't exist
-        output_dir = Path("Raw Data")
+        output_dir = Path("Raw Data 750 Day")
         output_dir.mkdir(parents=True, exist_ok=True)
 
         for id, stock_price in self.stocks_dict.items():
@@ -478,9 +478,9 @@ class Stocks:
 
         return
     
-    def dailyReturnyCalc(self, window=14):
+    def dailyReturnCalc(self, window=14):
         self.data['Daily Return'] = self.data.groupby('Stock')['Price'].pct_change()
-        self.data[f'STD {window}'] = self.data.groupby('Stock')['Daily Return'].transform(lambda x: x.rolling(window=window).std())
+        self.data[f'SD {window}'] = self.data.groupby('Stock')['Daily Return'].transform(lambda x: x.rolling(window=window).std())
 
         return
         
@@ -507,13 +507,16 @@ if __name__ == '__main__':
     ema_period = 9
     no_sd = 2
 
-    df = Stocks(prcAll)
+    df = ineffecieintStocks(prcAll)
+    df.raw()
+    """df = Stocks(prcAll)
     df.dailyReturnyCalc()
     df.atrCalc()
     stock = df.data[df.data['Stock']==1]
     yearly_mean = stock['ATR'].rolling(window=365).mean().iloc[-1]
     print(stock)
-    print(yearly_mean)
+    print(yearly_mean)"""
+
     #print(vol)
     #print(df.macdCalc())
 
