@@ -327,7 +327,7 @@ class ineffecieintStocks:
         stoch_rsi_dict = self.stochRSICalc(self.rsiCalc())
         rsi_dict = self.rsiCalc()
         macd_dict = self.macdCalc()
-        atr_dict = self.atrCalc(30)
+        atr_dict = self.atrCalc(200)
         
         stock_ids = bollinger_bands_dict.keys()
 
