@@ -40,7 +40,7 @@ def get_unique_directory(dirname):
 
     return unique_dirname
 
-pricesFile = "./prices.txt"
+pricesFile = "./prices 750 days.txt"
 prcAll = loadPrices(pricesFile)
 print("Loaded %d instruments for %d days" % (nInst, nt))
 
@@ -54,7 +54,7 @@ def calcPL(prcHist):
     value = 0
     todayPLL = []
     (_, nt) = prcHist.shape
-    for t in range(250, 501):
+    for t in range(500, 751):
         prcHistSoFar = prcHist[:, :t]
         newPosOrig = getPosition(prcHistSoFar)
         curPrices = prcHistSoFar[:, -1]

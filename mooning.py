@@ -58,9 +58,9 @@ def getMyPosition(prcSoFar):
         # RSI
         rsi = float(stock_data[f'RSI {rsi_window}'].iloc[0])
 
-        if rsi < overbought_rsi:
+        if rsi <= oversold_rsi:
             longOrShort_dict['RSI'] = 'Long'
-        elif rsi > oversold_rsi:
+        elif rsi >= overbought_rsi:
             longOrShort_dict['RSI'] = 'Short'
 
         # Stochastic RSI
@@ -160,9 +160,9 @@ def getMyPosition(prcSoFar):
                 elif price >= ub:
                     longOrShort_dict['BB'] = 'Short'
 
-                if rsi <= overbought_rsi:
+                if rsi <= oversold_rsi:
                     longOrShort_dict['RSI'] = 'Long'
-                elif rsi >= oversold_rsi:
+                elif rsi >= overbought_rsi:
                     longOrShort_dict['RSI'] = 'Short'
 
                 if s_rsi <= oversold_s_rsi:
@@ -214,6 +214,10 @@ def newStrat(prcSoFar):
     fast_ema = 12
     macd_signal_length = 9
 
+    volatile_atr_range = 4
+    less_volatile_atr_range = 7
+    stop_loss = 0.05
+
     df = Stocks(prcSoFar)
     df.bbCalc(ma_period)
     df.rsiCalc(rsi_window)
@@ -222,32 +226,34 @@ def newStrat(prcSoFar):
     df.maCalc(200)
     df.maCalc(50)
     df.atrCalc()
-    df.dailyReturnCalc()
+    df.sdCalc(365)
+    df.atrCalc(volatile_atr_range)
+    df.atrCalc(less_volatile_atr_range)
 
 
     last_week_of_data = df.data.groupby('Stock').tail(7)
     #today_price = today_data['Price'] # will return as dataframe rather than series
-
-    volatility = df.data.groupby('Stock')[f'ATR {atr_window}'].mean()
+    average_volatility = df.data.groupby('Stock')['SD 365'].tail(1).mean()
+    #volatility = df.data.groupby('Stock')[f'ATR {atr_window}']
     #volatility = df.data.groupby('Stock')['Daily Return'].std()
-    print(volatility)
+    #print(volatility)
+    print(df.data.groupby('Stock').tail(1))
+    print(f"average: {average_volatility}")
 
     for stock_id, last_week_stock_data in last_week_of_data.groupby('Stock'):
         longOrShort_dict = {}
         today_data = last_week_stock_data.tail(1)
         price = float(today_data['Price'].iloc[0])
-        stock_historical_volatility = volatility[stock_id]
-        #curr_vol = stock_data[f'ATR {atr_window}'].iloc[0]
-        curr_vol = today_data[f'ATR {atr_window}'].iloc[0]
-        volatile = curr_vol > stock_historical_volatility
+        stock_historical_volatility = float(today_data['SD 365'].iloc[0])
+        volatile = stock_historical_volatility > average_volatility
         posLimit = int(10000 / price)
         currPos = currentPos[stock_id]
 
         # Bollinger Bands
         ub = float(today_data['Upper Band'].iloc[0])
-        mub = float(today_data['Mid Upper Band'].iloc[0])
+        mub = float(today_data['Upper Mid Band'].iloc[0])
         lb = float(today_data['Lower Band'].iloc[0])
-        mlb = float(today_data['Mid Lower Band'].iloc[0])
+        mlb = float(today_data['Lower Mid Band'].iloc[0])
         # Relative Strength Index
         rsi = float(today_data[f'RSI {rsi_window}'].iloc[0])
         # Stochastic RSI
@@ -256,20 +262,28 @@ def newStrat(prcSoFar):
         macd = float(today_data['MACD'].iloc[0])
         macd_signal = float(today_data['MACD Signal'].iloc[0])
         macd_diff = macd - macd_signal
+        # moving averages
+        ma50 = float(today_data['50MA'].iloc[0])
+        ma200 = float(today_data['200MA'].iloc[0])
+        # ATRs
+        volatile_atr = float(today_data[f'ATR {volatile_atr_range}'])
+        less_volatile_atr = float(today_data[f'ATR {less_volatile_atr_range}'])
 
         if price <= lb:
             longOrShort_dict['BB'] = 'Long'
         elif price >= ub:
             longOrShort_dict['BB'] = 'Short'
 
-        if rsi < overbought_rsi:
+        if rsi <= oversold_rsi:
             longOrShort_dict['RSI'] = 'Long'
-        elif rsi > oversold_rsi:
+        elif rsi >= overbought_rsi:
             longOrShort_dict['RSI'] = 'Short'
+        elif rsi <= overbought_rsi and rsi >= oversold_rsi:
+            longOrShort_dict['RSI'] = 'Any'
 
-        if s_rsi < oversold_s_rsi:
+        if s_rsi <= oversold_s_rsi: 
             longOrShort_dict['Stoch RSI'] = 'Long'
-        elif s_rsi > overbought_s_rsi:
+        elif s_rsi >= overbought_s_rsi:
             longOrShort_dict['Stoch RSI'] = 'Short'
 
         if macd_diff >= 0:
@@ -277,16 +291,60 @@ def newStrat(prcSoFar):
         else:
             longOrShort_dict['MACD'] = 'Short'
 
-        
-        print(stock_id)
-        print(today_data)
-        #print(f"historical volatility: {stock_historical_volatility}")
-        #print(f"today's volatility: {curr_vol}")
-        print("\n")
+        if ma50 >= ma200:
+            longOrShort_dict['GC'] = 'Long'
+        else:
+            longOrShort_dict['GC'] = 'Short'
 
-        if longOrShort_dict['RSI'] == 'Long':
-            return
+        # calculate position size
+        max_confluence = 5
+        long_strat = []
+        short_strat = []
+        for strat, condition in longOrShort_dict.items():
+            if condition == 'Long':
+                long_strat.append(strat)
+            elif condition == 'Short':
+                short_strat.append(strat)
+            if strat == 'RSI':
+                if condition == 'Any':
+                    long_strat.append(strat)
+                    short_strat.append(strat)
+        
+        long_counter = len(long_strat)
+        short_counter = len(short_strat)
+
+        if long_counter >= short_counter and long_counter > 0:
+            position_size = posLimit * (long_counter/max_confluence)
+        elif short_counter >= long_counter and short_counter > 0:
+            position_size = -posLimit * (short_counter/max_confluence)
+
+        if volatile:
+            if currPos == 0:
+                if longOrShort_dict['BB'] == 'Long':
+                    if longOrShort_dict['RSI'] == 'Any' or longOrShort_dict['RSI'] == 'Long':
+                        currentPos[stock_id] = position_size
+                        entryInfo[stock_id] = {'Position': 'Long', 'Entry Price': price, 'Stop Loss': price}
+                        # stop loss at entry for now
+                elif longOrShort_dict['BB'] == 'Short':
+                    if longOrShort_dict['RSI'] == 'Any' or longOrShort_dict['RSI'] == 'Short':
+                        currentPos[stock_id] = position_size
+                        entryInfo[stock_id] = {'Position': 'Short', 'Entry Price': price, 'Stop Loss': price}
             
+            else:
+                position = entryInfo[stock_id]['Position'] 
+                entry_price = entryInfo[stock_id]['Entry Price']
+                sl_price = entryInfo[stock_id]['Stop Loss']
+                if position == 'Long':
+                    if (price >= ub and volatile_atr < 0) or rsi >= overbought_rsi:
+                        currentPos[stock_id] = 0
+                    elif price > mub and volatile_atr < 0:
+                        entryInfo[stock_id]['Stop Loss'] = mub
+                    elif price < sl_price:
+                        currentPos[stock_id] = 0
+                elif position == 'Short':
+                    if (price <= lb and volatile_atr > 0):
+                        return # TODO short exit conditions
+
 
 def _getMyPosition(prcSoFar):
     global currentPos
@@ -313,10 +371,10 @@ if __name__ == '__main__':
         return (df.values).T
 
 
-    pricesFile = "./prices.txt"
+    pricesFile = "./prices 750 days.txt"
     prcAll = loadPrices(pricesFile)
 
     (_, nt) = prcAll.shape
-    prcHistSoFar = prcAll[:, :250]
+    prcHistSoFar = prcAll[:, :750]
 
     newStrat(prcHistSoFar)
