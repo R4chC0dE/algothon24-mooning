@@ -328,6 +328,7 @@ class ineffecieintStocks:
         rsi_dict = self.rsiCalc()
         macd_dict = self.macdCalc()
         atr_dict = self.atrCalc(200)
+        gc_dict = self.goldenCrossCalc()
         
         stock_ids = bollinger_bands_dict.keys()
 
@@ -336,6 +337,7 @@ class ineffecieintStocks:
             # graphing BB and Price
             if stock_id in bollinger_bands_dict:
                 bollinger_bands = bollinger_bands_dict[stock_id]
+                golden_cross = gc_dict[stock_id]
                 # Plotting the Bollinger Bands
                 plt.subplot(5,1,1)
                 plt.plot(bollinger_bands['Price'], label='Price')
@@ -343,6 +345,8 @@ class ineffecieintStocks:
                 plt.plot(bollinger_bands['Upper Band'], label='Upper Band', linestyle='--')
                 plt.plot(bollinger_bands['Lower Band'], label='Lower Band', linestyle='--')
                 plt.fill_between(bollinger_bands.index, bollinger_bands['Upper Band'], bollinger_bands['Lower Band'], color='gray', alpha=0.3)
+                plt.plot(golden_cross['50 Day MA'], label='50 Day MA')
+                plt.plot(golden_cross['200 Day MA'], label='200 Day MA')
 
                 # Add a vertical line at id=250
                 plt.axvline(x=250, color='red', linestyle='--', linewidth=1)
@@ -502,7 +506,7 @@ class Stocks:
 
         return
     
-    def dailyReturnCalc(self, window=14):
+    def sdCalc(self, window=14):
         self.data['Daily Return'] = self.data.groupby('Stock')['Price'].pct_change()
         self.data[f'SD {window}'] = self.data.groupby('Stock')['Daily Return'].transform(lambda x: x.rolling(window=window).std())
 
@@ -522,8 +526,8 @@ def loadPrices(fn):
     return (df.values).T
 
 if __name__ == '__main__':
-    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-    from statsmodels.tsa.stattools import acf, pacf
+    #from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+    #from statsmodels.tsa.stattools import acf, pacf
     # read the data from the text file
     file_path = './prices 750 days.txt'   
     prcAll = loadPrices(file_path)
