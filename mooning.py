@@ -10,9 +10,11 @@ from graphing import Stocks
 nInst = 50
 currentPos = np.zeros(nInst)
 entryInfo = {}
+iterations = 0 # counting iterations
+num_of_days = 0
 
 def getMyPosition(prcSoFar):
-    global currentPos, entryInfo
+    global currentPos, entryInfo, iterations, num_of_days
 
     # bollinger bands variables
     ma_period = 21
@@ -32,20 +34,18 @@ def getMyPosition(prcSoFar):
     less_volatile_atr_range = 7
     stop_loss = 0.05
 
-    num_of_days = 500
-    iterations = 0 # counting iterations
 
     df = Stocks(prcSoFar)
+    if iterations == 0:
+        num_of_days = int(len(df.data)/nInst) 
     df.bbCalc(ma_period)
     df.rsiCalc(rsi_window)
     df.stochRSICalc(rsi_window)
     df.macdCalc(slow_ema, fast_ema, macd_signal_length)
     df.maCalc(200)
     df.maCalc(50)
-    df.atrCalc()
     df.sdCalc(num_of_days-1)
-    df.atrCalc(volatile_atr_range)
-    df.atrCalc(less_volatile_atr_range)
+   
 
 
     last_week_of_data = df.data.groupby('Stock').tail(7)
@@ -88,8 +88,8 @@ def getMyPosition(prcSoFar):
         ma200 = float(today_data['200MA'].iloc[0])
         ma50_above_ma200 = ma50 > ma200
         # ATRs
-        volatile_atr = float(today_data[f'ATR {volatile_atr_range}'].iloc[0])
-        less_volatile_atr = float(today_data[f'ATR {less_volatile_atr_range}'].iloc[0])
+        #volatile_atr = float(today_data[f'ATR {volatile_atr_range}'].iloc[0])
+        #less_volatile_atr = float(today_data[f'ATR {less_volatile_atr_range}'].iloc[0])
 
         if price <= lb:
             longOrShort_dict['BB'] = 'Long'
@@ -339,20 +339,9 @@ def getMyPosition(prcSoFar):
                                 local_extreme = price
                             sl_price = (1 + stop_loss) * local_extreme
                             entryInfo[stock_id]['Stop Loss'] = sl_price
-    num_of_pos = currentPos != 0
-    print(f"number of positions: {sum(num_of_pos)}")
-    return currentPos
+    
+    iterations += 1
 
-def __getMyPosition(prcSoFar):
-    global currentPos
-    (nins, nt) = prcSoFar.shape
-    if (nt < 2):
-        return np.zeros(nins)
-    lastRet = np.log(prcSoFar[:, -1] / prcSoFar[:, -2])
-    lNorm = np.sqrt(lastRet.dot(lastRet))
-    lastRet /= lNorm
-    rpos = np.array([int(x) for x in 5000 * lastRet / prcSoFar[:, -1]])
-    currentPos = np.array([int(x) for x in currentPos+rpos])
     return currentPos
 
 if __name__ == '__main__':

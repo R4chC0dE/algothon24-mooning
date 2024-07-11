@@ -412,11 +412,12 @@ class ineffecieintStocks:
             plot_path = output_dir / f'stock{stock_id}.png'
             plt.savefig(plot_path)
             plt.close()
+            
 class Stocks:
     def __init__(self, raw_data):
         self.data = pd.DataFrame(raw_data.T).stack().reset_index()
         self.data.columns = ['Day', 'Stock', 'Price']
-        self.whatToGraph = ['Price']
+        self.whatToGraph = []
 
     def raw(self):
         # Create directory if it doesn't exist
@@ -439,23 +440,21 @@ class Stocks:
 
     def bbCalc(self, ma_period=21):
         # Calculate the moving average, standard deviation, and Bollinger Bands
-        self.maCalc(ma_period)
+        self.data[f'{ma_period}MA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).mean())
         sd = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).std())
         self.data['Upper Band'] = self.data[f'{ma_period}MA'] + (sd * 2)
         self.data['Upper Mid Band'] = self.data[f'{ma_period}MA'] + (sd * 1)
         self.data['Lower Band'] = self.data[f'{ma_period}MA'] - (sd * 2)
         self.data['Lower Mid Band'] = self.data[f'{ma_period}MA'] - (sd * 1)
 
-        data = [f'{ma_period}MA','Upper Band','Lower Band']
-        for data in data:
-            self.whatToGraph.append(data)
+        self.whatToGraph.append('Bollinger Bands')
 
         return
     
     def maCalc(self, ma_period=21):
         self.data[f'{ma_period}MA'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.rolling(window=ma_period).mean())
         
-        self.whatToGraph.append(f'{ma_period}MA')
+        self.whatToGraph.append(f'{ma_period}_MA')
 
         return
 
@@ -467,8 +466,8 @@ class Stocks:
         gain = price_diff.where(price_diff > 0, 0)
         loss = -price_diff.where(price_diff < 0, 0)
 
-        avg_gain = gain.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window, min_periods=1).mean())
-        avg_loss = loss.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window, min_periods=1).mean())
+        avg_gain = gain.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).mean())
+        avg_loss = loss.groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).mean())
 
         rs = avg_gain/avg_loss
 
@@ -481,13 +480,13 @@ class Stocks:
         return
 
     def stochRSICalc(self, window=14):
-        rsi_min = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window,min_periods=1).min())
-        rsi_max = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window, min_periods=1).max())
+        rsi_min = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).min())
+        rsi_max = self.data[f'RSI {window}'].groupby(self.data['Stock']).transform(lambda x: x.rolling(window=window).max())
         stoch_rsi = (self.data[f'RSI {window}'] - rsi_min) / (rsi_max - rsi_min) * 100
 
         self.data[f'StochRSI {window}'] = stoch_rsi
 
-        self.whatToGraph.append(f'StochRSI {window}')
+        self.whatToGraph.append('StochRSI')
         return
     
     def macdCalc(self, slow_ema=26, fast_ema=12, signal=9):
@@ -499,10 +498,9 @@ class Stocks:
         # calculate macd line
         self.data[f'MACD'] = self.data[f'{fast_ema}EMA'] - self.data[f'{slow_ema}EMA']
 
-        self.data['MACD Signal'] = self.data.groupby('Stock')['MACD'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
+        self.data['MACD Signal'] = self.data.groupby('Stock')['Price'].transform(lambda x: x.ewm(span=signal, adjust=False).mean())
 
         self.whatToGraph.append('MACD')
-        self.whatToGraph.append('MACD Signal')
 
         return
     
@@ -511,13 +509,6 @@ class Stocks:
         self.data[f'SD {window}'] = self.data.groupby('Stock')['Daily Return'].transform(lambda x: x.rolling(window=window).std())
 
         return
-        
-    def atrCalc(self, window=14):
-        self.data['TR'] = self.data.groupby('Stock')['Price'].diff().abs()
-        self.data[f'ATR {window}'] = self.data.groupby('Stock')['TR'].transform(lambda x: x.rolling(window=window).mean())
-
-        return
-
     
 def loadPrices(fn):
     global nt, nInst
