@@ -2,9 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from mooning import getMyPosition as getPosition
-from pathlib import Path
-import os
+from main import getMyPosition as getPosition
 
 nInst = 0
 nt = 0
@@ -18,27 +16,6 @@ def loadPrices(fn):
     (nt, nInst) = df.shape
     return (df.values).T
 
-def get_unique_filename(filename):
-    base, ext = os.path.splitext(filename)
-    counter = 1
-    unique_filename = filename
-
-    while os.path.exists(unique_filename):
-        unique_filename = f"{base} ({counter}){ext}"
-        counter += 1
-
-    return unique_filename
-
-def get_unique_directory(dirname):
-    base = dirname
-    counter = 1
-    unique_dirname = Path(dirname)
-
-    while unique_dirname.exists():
-        unique_dirname = Path(f"{base} ({counter})")
-        counter += 1
-
-    return unique_dirname
 
 pricesFile = "./prices 750 days.txt"
 prcAll = loadPrices(pricesFile)
@@ -74,14 +51,8 @@ def calcPL(prcHist):
         ret = 0.0
         if (totDVolume > 0):
             ret = value / totDVolume
-        print("Day %d value: %.2lf today PL: $%.2lf $-traded: %.0lf return: %.5lf" %
+        print("Day %d value: %.2lf todayPL: $%.2lf $-traded: %.0lf return: %.5lf" %
               (t, value, todayPL, totDVolume, ret))
-        
-        # Open the file in write mode
-        with open(unique_output_file, "a") as file:
-            file.write("Day %d value: %.2lf today PL: $%.2lf $-traded: %.0lf return: %.5lf \n" %
-                        (t, value, todayPL, totDVolume, ret))
-
     pll = np.array(todayPLL)
     (plmu, plstd) = (np.mean(pll), np.std(pll))
     annSharpe = 0.0
@@ -89,13 +60,6 @@ def calcPL(prcHist):
         annSharpe = np.sqrt(250) * plmu / plstd
     return (plmu, ret, plstd, annSharpe, totDVolume)
 
-
-# own output code
-output_dir = Path("Evaluation Output")
-output_dir.mkdir(parents=True, exist_ok=True)
-# Create directory if it doesn't exist
-output_file = output_dir / "results.txt"
-unique_output_file = get_unique_filename(output_file)
 
 (meanpl, ret, plstd, sharpe, dvol) = calcPL(prcAll)
 score = meanpl - 0.1*plstd
@@ -106,13 +70,3 @@ print("StdDev(PL): %.2lf" % plstd)
 print("annSharpe(PL): %.2lf " % sharpe)
 print("totDvolume: %.0lf " % dvol)
 print("Score: %.2lf" % score)
-
-with open(unique_output_file, "a") as file:
-    file.write("=====\n")
-    file.write("mean(PL): %.1lf \n" % meanpl)
-    file.write("return: %.5lf \n" % ret)
-    file.write("StdDev(PL): %.2lf \n" % plstd)
-    file.write("annSharpe(PL): %.2lf \n" % sharpe)
-    file.write("totDvolume: %.0lf \n" % dvol)
-    file.write("Score: %.2lf \n" % score)
-
