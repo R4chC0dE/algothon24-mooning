@@ -1,0 +1,12 @@
+Day 500 value: -247.49 today PL: $-247.49 $-traded: 247488 return: -0.00100 
+Day 501 value: -219.40 today PL: $28.09 $-traded: 277426 return: -0.00079 
+Day 502 value: -14.25 today PL: $205.15 $-traded: 508457 return: -0.00003 
+Day 503 value: -438.87 today PL: $-424.62 $-traded: 740095 return: -0.00059 
+Day 504 value: -492.46 today PL: $-53.59 $-traded: 758149 return: -0.00065 
+Day 505 value: -374.09 today PL: $118.37 $-traded: 971443 return: -0.00039 
+Day 506 value: -582.15 today PL: $-208.06 $-traded: 1183139 return: -0.00049 
+Day 507 value: -673.72 today PL: $-91.56 $-traded: 1197018 return: -0.00056 
+Day 508 value: -634.09 today PL: $39.63 $-traded: 1414545 return: -0.00045 
+Day 509 value: -674.08 today PL: $-39.99 $-traded: 1620182 return: -0.00042 
+Day 510 value: -459.12 today PL: $214.96 $-traded: 1620448 return: -0.00028 
+Day 511 value: -799.78 today PL: $-340.67 $-traded: 1831786 return: -0.00044 
